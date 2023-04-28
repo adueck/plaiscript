@@ -1,6 +1,9 @@
 export function printValue(v: Value): string {
+    if (Array.isArray(v)) {
+        return "'()";
+    }
     if (typeof v === "object") {
-        return `function with args: ${v.args.join(" ")}`;
+        return `#function`;
     }
     if (typeof v === "boolean" || typeof v === "number") {
         return v.toString();

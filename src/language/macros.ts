@@ -1,10 +1,10 @@
-export const macros: Partial<Record<string, (se: SE[]) => SE>> = {
+export const macros: Partial<Record<string, (se: SExpr[]) => SExpr>> = {
     let: letMacro,
     strictIf: strictIfMacro,
     cond: condMacro,
 }
 
-function letMacro(sl: SE[]): SE {
+function letMacro(sl: SExpr[]): SExpr {
     if (sl[0] !== "let") {
         throw new Error("invalid macro");
     }
@@ -22,7 +22,7 @@ function letMacro(sl: SE[]): SE {
     ];
 } 
 
-export function funMacro(sl: SE[]): SE {
+export function funMacro(sl: SExpr[]): SExpr {
     if (sl[0] !== "define") {
         throw new Error("invalid macro");
     }
@@ -44,11 +44,11 @@ export function funMacro(sl: SE[]): SE {
     ];
 }
 
-function strictIfMacro(sl: SE[]): SE {
+function strictIfMacro(sl: SExpr[]): SExpr {
     if (sl[0] !== "strictIf") {
         throw new Error("invalid macro");
     }
-    if (sl.length < 4) {
+    if (sl.length !== 4) {
         throw new Error("strictlyIf requires 3 arguments");
     }
     const [label, cond, thenBranch, elseBranch] = sl;
@@ -60,7 +60,7 @@ function strictIfMacro(sl: SE[]): SE {
     ];
 }
 
-function condMacro(se: SE[]): SE {
+function condMacro(se: SExpr[]): SExpr {
     if (se[0] !== "cond") {
         throw new Error("invalid macro");
     }

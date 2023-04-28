@@ -1,18 +1,18 @@
 // Syntax Types
 
-type SE = A | SE[];
+type SExpr = Atom | SExpr[];
 
-type A = boolean | string | { s: string } | number;
+type Atom = boolean | string | { s: string } | number;
 
 // Symantics Types
 
-type VarTable = Record<string, Value>;
+type Values = Record<string, Value>;
 
 type Fun = {
     args: string[],
-    body: SE,
-    env: VarTable,
+    body: SExpr,
+    env: Values,
 };
 
-type Value = number | boolean | Fun | string;
+type Value = number | boolean | Fun | string | [];
 

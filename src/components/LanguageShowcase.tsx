@@ -3,15 +3,15 @@ import { printValue } from '../lib/print-value';
 
 function LanguageShowCase({ tokenizer, parser, evaluator, grammar, examples }: {
     tokenizer: (l: string) => (string | number)[],
-    parser: (t: (string | number)[]) => SE[],
-    evaluator: (x: SE[]) => Value[],
+    parser: (t: (string | number)[]) => SExpr[],
+    evaluator: (x: SExpr[]) => Value[],
     grammar: string,
     examples: { input: string, value: any }[],
 }) {
   const [text, setText] = useState("");
   const [error, setError] = useState<string>("");
   const [result, setResult] = useState<Value[]>([]);
-  const [tree, setTree] = useState<SE[]>([]);
+  const [tree, setTree] = useState<SExpr[]>([]);
   function handleCalculate(text: string) {
     if (!text) {
       setTree([]);
@@ -50,12 +50,11 @@ function LanguageShowCase({ tokenizer, parser, evaluator, grammar, examples }: {
   return (
     <div className="mb-4 mt-4" style={{ maxWidth: "40rem" }}>
       <pre>
-        <code>{`(let
-  (fibb (lambda (x) (if (< x 3)
-                    x
-                    (+ (fibb (- x 2)) (fibb (- x 1))))))
-   (fibb 7))
-  `}
+        <code>{`(define (fibb n)
+  (if (< n 3)
+  n
+  (+ (fibb (- n 2)) (fibb (- n 1)))))
+(fibb 7)`}
         </code>
       </pre>
       {/* <details className="mb-3">

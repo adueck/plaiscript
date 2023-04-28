@@ -5,8 +5,8 @@ import { funMacro, macros } from "./macros";
 // SL -> ( SP )
 // A -> number | boolean | string
 
-export function evaluateMiniLisp(sp: SE[]): Value[] {
-    const varTable: VarTable = {};
+export function evaluateMiniLisp(sp: SExpr[]): Value[] {
+    const varTable: Values = {};
     // evaluate root SP
     return sp.reduce((arr, s) => {
         // check for top-level defines here
@@ -20,7 +20,7 @@ export function evaluateMiniLisp(sp: SE[]): Value[] {
             : [...arr, v];
     }, [] as Value[]);
 
-    function handleDefine(s: SE, localVars: VarTable): VarTable {
+    function handleDefine(s: SExpr, localVars: Values): Values {
         if (!Array.isArray(s) || s[0] !== "define") {
             throw new Error("expected define statement");
         }
@@ -41,7 +41,7 @@ export function evaluateMiniLisp(sp: SE[]): Value[] {
         };
     }
     
-    function evaluateSE(se: SE, localVars: VarTable): Value {
+    function evaluateSE(se: SExpr, localVars: Values): Value {
         if (Array.isArray(se)) {
             return evaluateSL(se, localVars)
         } else {
@@ -49,7 +49,10 @@ export function evaluateMiniLisp(sp: SE[]): Value[] {
         }
     }
     
-    function evaluateSL(sl: SE[], localVars: VarTable): Value {
+    function evaluateSL(sl: SExpr[], localVars: Values): Value {
+        if (sl.length === 0) {
+            return [];
+        }
         const [fS, ...elems] = sl;
         const f = typeof fS === "string"
             ? fS
@@ -101,7 +104,7 @@ export function evaluateMiniLisp(sp: SE[]): Value[] {
             if (f === "<") {
                 return dist(elems, (a, b) => a < b, f);
             }
-            function dist(args: SE[], f: (a: Value, b: Value) => boolean, fName: string): boolean {
+            function dist(args: SExpr[], f: (a: Value, b: Value) => boolean, fName: string): boolean {
                 if (args.length === 0) {
                     throw new Error(`${fName} requires 1 or more arguments`);
                 }
@@ -113,7 +116,7 @@ export function evaluateMiniLisp(sp: SE[]): Value[] {
                 const yv = evaluateSE(y, localVars);
                 return f(xv, yv) && dist([y, ...rest], f, fName);
             }
-            function getNum(se: SE, fn: string): number {
+            function getNum(se: SExpr, fn: string): number {
                 const n = evaluateSE(se, localVars);
                 if (typeof n !== "number") {
                     throw new Error(`each argument for ${fn} must be a number`);
@@ -199,11 +202,14 @@ export function evaluateMiniLisp(sp: SE[]): Value[] {
             }
             throw new Error(`function '${f}' not defined`);
         }
+        if (Array.isArray(fv)) {
+            throw new Error("unexpected '()");
+        }
         return applyFunction(fv, elems, localVars);
     }
 
-    function applyFunction(l: Fun, v: SE[], localVars: VarTable): Value {
-         const newVars: VarTable = {
+    function applyFunction(l: Fun, v: SExpr[], localVars: Values): Value {
+         const newVars: Values = {
             ...structuredClone(localVars),
             ...l.args.reduce((vars, param, i) => {
                 return {
@@ -216,7 +222,7 @@ export function evaluateMiniLisp(sp: SE[]): Value[] {
         return evaluateSE(l.body, newVars);
     }
     
-    function evaluateA(a: A, localVars: VarTable): Value {
+    function evaluateA(a: Atom, localVars: Values): Value {
         if (typeof a === "number" || typeof a === "boolean") {
             return a;
         }

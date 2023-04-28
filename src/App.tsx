@@ -9,7 +9,7 @@ const plai = "https://www.plai.org/";
 function App() {
   return <div className="container py-4">
     <h1>PLAIScript</h1>
-    <p>A language inspired by and built while working through <a href={plai}>PLAI</a>, but in TypeScript.</p>
+    <p>A language inspired by and built while working through <a href={plai}>PLAI</a>, implemented in TypeScript.</p>
     <p className="small"><a href={repo}>Source Code</a> - Textbook: <a href={plai}>Programming Languages: Application and Interpretation</a></p>
     <LanguageShowCase
       tokenizer={miniLispTokenizer}

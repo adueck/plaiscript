@@ -5,33 +5,37 @@ import { useTokens } from "../lib/useTokens";
 // SL -> ( SP )
 // A -> number | boolean | string
 
-export function parseMiniLisp(tokens: Readonly<(string|number)[]>): SE[] {
+export function parseMiniLisp(tokens: Readonly<(string|number)[]>): SExpr[] {
     const t = useTokens(tokens);
     const sp = parseElements();
     if (!t.isEmpty()) {
         throw new Error("trailing tokens");
     }
     return sp;
-    function parseElements(): SE[] {
+    function parseElements(): SExpr[] {
         const first = parseSE();
         if (t.lookahead() === undefined || t.lookahead() === ")" || t.lookahead() === "]") {
             return [first];
         }
         return [first, ...parseElements()];
     }
-    function parseSE(): SE {
+    function parseSE(): SExpr {
         const l = t.lookahead();
         if (l !== "(" && l !== "[") {
             return parseA();
         } else {
+            t.consume();
             const closer = l === "(" ? ")" : "]";
-            t.match(l);
+            if (t.lookahead() === closer) {
+                t.consume();
+                return [];
+            }
             const s = parseElements();
             t.match(closer);
             return s;
         }
     }
-    function parseA(): A {
+    function parseA(): Atom {
         const a = t.lookahead();
         t.consume();
         if (a === undefined) {
