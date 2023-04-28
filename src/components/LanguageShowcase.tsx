@@ -5,7 +5,7 @@ import Toast from "react-bootstrap/Toast";
 
 type FeatureName = typeof features[number]["label"];
 
-function LanguageShowCase({ tokenizer, parser, evaluator, grammar, examples }: {
+function LanguageShowCase({ tokenizer, parser, evaluator }: {
     tokenizer: (l: string) => (string | number)[],
     parser: (t: (string | number)[]) => SExpr[],
     evaluator: (x: SExpr[]) => Value[],
@@ -54,10 +54,6 @@ function LanguageShowCase({ tokenizer, parser, evaluator, grammar, examples }: {
     setResult([]);
     setTree([]);
   }
-  function loadExample(t: string) {
-    handleClear();
-    setText(t);
-  }
   return (
     <div className="mb-4 mt-4" style={{ maxWidth: "40rem" }}>
       <pre>
@@ -90,7 +86,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator, grammar, examples }: {
           <code>
             <pre>
               {features.find(f => f.label === featureSelected)?.cases.map<string>((c) => (
-                `${c.input}\n> ${c.output.join(" ")}`
+                `${c.input}\n> ${c.output.join("\n")}`
               )).join("\n")}
             </pre>
           </code>
@@ -108,12 +104,12 @@ function LanguageShowCase({ tokenizer, parser, evaluator, grammar, examples }: {
       </div>
       <div className="d-flex flex-row justify-content-end">
         <div>
-          <button className="btn btn-secondary" onClick={handleClear}>clear</button>
+          <button className="btn btn-sm btn-secondary" onClick={handleClear}>clear</button>
         </div>
       </div>
       {error && <div className="text-muted small mt-2"><samp>{error}</samp></div>}
       {result.length > 0 && <div>
-        <div className="py-2">Result:</div>
+        <div className="py-1">Result:</div>
         <samp>
           <pre>{result.map(v => printValue(v)).join(" ")}</pre>
         </samp>

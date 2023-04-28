@@ -14,10 +14,7 @@ export function interp(sp: SExpr[]): Value[] {
             Object.assign(varTable, handleDefine(s, varTable));
             return arr;
         }
-        const v = evaluateSE(s, varTable);
-        return v === null
-            ? arr
-            : [...arr, v];
+        return [...arr, evaluateSE(s, varTable)];
     }, [] as Value[]);
 
     function handleDefine(s: SExpr, localVars: Values): Values {
@@ -25,12 +22,12 @@ export function interp(sp: SExpr[]): Value[] {
             throw new Error("expected define statement");
         }
         const varName = s[1];
+        if (Array.isArray(varName)) {
+            return handleDefine(funMacro(s), localVars);
+        }
         const value = s[2];
         if (value === undefined) {
             throw new Error("value for variable definition required");
-        }
-        if (Array.isArray(varName)) {
-            return handleDefine(funMacro(s), localVars);
         }
         if (typeof varName !== "string") {
             throw new Error("variable name for define statement must be a string");
@@ -59,7 +56,7 @@ export function interp(sp: SExpr[]): Value[] {
             // this means I can use "strings" as function names! Is this a good idea??
             : evaluateSE(fS, localVars);
         if (typeof f === "boolean") {
-            throw new Error("boolean found instead of function at beginning of S-expr");
+            throw new Error("boolean is not a function");
         }
         if (["+", "-", "*", "/", "=", "<", ">"].includes(f as string)) {
             if (f === "+") {
@@ -149,6 +146,13 @@ export function interp(sp: SExpr[]): Value[] {
             return typeof evaluateSE(elems[0], localVars) === "object";
             
         }
+        if (f === "empty?") {
+            if (elems.length === 0) {
+                throw new Error(`empty? requires 1 or more arguments`);
+            }
+            return Array.isArray(evaluateSE(elems[0], localVars));
+            
+        }
         if (f === "local") {
             const defines = elems[0];
             const body = elems[1];
@@ -203,7 +207,7 @@ export function interp(sp: SExpr[]): Value[] {
             throw new Error(`function '${f}' not defined`);
         }
         if (Array.isArray(fv)) {
-            throw new Error("unexpected '()");
+            throw new Error("'() is not a function");
         }
         return applyFunction(fv, elems, localVars);
     }

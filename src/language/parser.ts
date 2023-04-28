@@ -5,7 +5,7 @@ import { useTokens } from "../lib/useTokens";
 // SL -> ( SP )
 // A -> number | boolean | string
 
-export function parseMiniLisp(tokens: Readonly<(string|number)[]>): SExpr[] {
+export function parse(tokens: Readonly<(string|number)[]>): SExpr[] {
     const t = useTokens(tokens);
     const sp = parseElements();
     if (!t.isEmpty()) {
@@ -41,15 +41,8 @@ export function parseMiniLisp(tokens: Readonly<(string|number)[]>): SExpr[] {
         if (a === undefined) {
             throw new Error("expected atom");
         }
-        if (a === '"') {
-            if (t.lookahead() === '"') {
-                t.consume();
-                return { s: "" };
-            }
-            const s = t.lookahead()?.toString() as string;
-            t.consume();
-            t.match('"');
-            return { s };
+        if (typeof a === "string" && a.charAt(0) === '"') {
+            return { s: a.slice(1, -1) };
         }
         return ["#t", "#f", "true", "false", "#true", "#false"].includes(a as string)
             ? (a === "t" || a === "true" || a === "#t" || a === "#true")

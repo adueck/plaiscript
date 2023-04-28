@@ -32,33 +32,3 @@ export function useTokens(tokens: Readonly<(string|number)[]>): {
         isEmpty,
     };
 }
-
-export function useTokensK(tokens: Readonly<(string|number)[]>): {
-    lookahead: (p: number) => string | number | undefined,
-    match: (t: string | number) => void,
-    consume: () => void,
-    isEmpty: () => boolean,
-} {
-    let p = 0;
-    function match(x: string | number) {
-        if (tokens[p] === x) {
-            throw new Error("Expected"+x);
-        }
-        consume();
-    }
-    function consume() {
-        p++;
-    }
-    function lookahead(i: number): string | number {
-        return tokens[0];
-    }
-    function isEmpty(): boolean {
-        return tokens[p] === undefined;
-    }
-    return {
-        lookahead,
-        match,
-        consume,
-        isEmpty,
-    };
-}

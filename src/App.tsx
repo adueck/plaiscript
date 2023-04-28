@@ -1,8 +1,8 @@
 import LanguageShowCase from './components/LanguageShowcase';
 import { interp } from './language/interpreter';
 import { miniLispGrammar } from './language/grammar';
-import { parseMiniLisp } from './language/parser';
-import { miniLispTokenizer } from './language/tokenizer';
+import { parse } from './language/parser';
+import { tokenizer } from './language/tokenizer';
 const repo = "https://github.com/adueck/plaiscript";
 const plai = "https://www.plai.org/"; 
 
@@ -12,9 +12,9 @@ function App() {
     <p>A language inspired by and built while working through <a href={plai}>PLAI</a>, implemented in TypeScript.</p>
     <p className="small"><a href={repo}>Source Code</a> - Textbook: <a href={plai}>Programming Languages: Application and Interpretation</a></p>
     <LanguageShowCase
-      tokenizer={miniLispTokenizer}
+      tokenizer={tokenizer}
       evaluator={interp}
-      parser={parseMiniLisp}
+      parser={parse}
       grammar={miniLispGrammar}
       examples={[]}
     />

@@ -1,11 +1,11 @@
 import { printValue } from "../lib/print-value";
 import { interp } from "./interpreter";
-import { parseMiniLisp } from "./parser";
-import { miniLispTokenizer } from "./tokenizer";
+import { parse } from "./parser";
+import { tokenizer } from "./tokenizer";
 import { features } from "./features";
 
 function evaluateFull(input: string): Value[] {
-    return interp(parseMiniLisp(miniLispTokenizer(input)));
+    return interp(parse(tokenizer(input)));
 }
 
 features.forEach(({ label, cases, errors }) => {

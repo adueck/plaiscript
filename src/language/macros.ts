@@ -5,6 +5,7 @@ export const macros: Partial<Record<string, (se: SExpr[]) => SExpr>> = {
 }
 
 function letMacro(sl: SExpr[]): SExpr {
+    /* istanbul ignore next */
     if (sl[0] !== "let") {
         throw new Error("invalid macro");
     }
@@ -23,6 +24,7 @@ function letMacro(sl: SExpr[]): SExpr {
 } 
 
 export function funMacro(sl: SExpr[]): SExpr {
+    /* istanbul ignore next */
     if (sl[0] !== "define") {
         throw new Error("invalid macro");
     }
@@ -45,6 +47,7 @@ export function funMacro(sl: SExpr[]): SExpr {
 }
 
 function strictIfMacro(sl: SExpr[]): SExpr {
+    /* istanbul ignore next */
     if (sl[0] !== "strictIf") {
         throw new Error("invalid macro");
     }
@@ -61,6 +64,7 @@ function strictIfMacro(sl: SExpr[]): SExpr {
 }
 
 function condMacro(se: SExpr[]): SExpr {
+    /* istanbul ignore next */
     if (se[0] !== "cond") {
         throw new Error("invalid macro");
     }

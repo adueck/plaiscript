@@ -4,6 +4,7 @@ export const features: { label: string, cases: { input: string, output: string[]
         cases: [
             { input: "4", output: ["4"] },
             { input: `"foo"`, output: ['"foo"'] },
+            { input: `"this is a string"`, output: ['"this is a string"']},
             { input: `#t`, output: ["true"] },
             { input: "#f", output: ["false"] },
             { input: "true", output: ["true"] },
@@ -12,7 +13,12 @@ export const features: { label: string, cases: { input: string, output: string[]
             { input: "#false", output: ["false"] },
             { input: "()", output: ["'()"] },
         ],
-        errors: [],
+        errors: [
+            `"foo`,
+            `foo"`,
+            `"foo
+bar"`
+        ],
     },
     {
         label: "value predicates",
@@ -35,12 +41,15 @@ export const features: { label: string, cases: { input: string, output: string[]
             { input: "(function? 123)", output: ["false"] },
             { input: "(function? false)", output: ["false"] },
             { input: "(function? #t)", output: ["false"] },
+            { input: "(empty? ())", output: ["true"] },
+            { input: "(empty? 12)", output: ["false"] },
         ],
         errors: [
             "(boolean?)",
             "(number?)",
             "(string?)",
             "(function?)",
+            "(empty?)",
         ],
     },
     {
@@ -93,7 +102,7 @@ export const features: { label: string, cases: { input: string, output: string[]
         ],
     },
     {
-        label: "if statement",
+        label: "conditionals",
         cases: [
             { input: "(if #t 10 20)", output: ["10"]},
             { input: "(if #f 10 20)", output: ["20"]},
@@ -102,12 +111,37 @@ export const features: { label: string, cases: { input: string, output: string[]
             { input: `(if 0 "foo" "bar")`, output: ['"bar"']},
             { input: `(if "" "foo" "bar")`, output: ['"bar"']},
             { input: `(if (lambda (x) (+ x 1)) 1 2)`, output: ["1"]},
+            { input: "(strictIf #t 1 2)", output: ["1"] },
+            { input: "(strictIf (= 1 2) 1 2)", output: ["2"] },
+            {
+                input: `(cond
+    [(= 3 4) "foo"]
+    [(= 3 5) "bar"]
+    [(= 3 3) "baz"])`,
+                output: ['"baz"'],
+            },
+            {
+                input: `(cond
+    [#t (+ 2 1)]
+    [#t "no"])`,
+                output: ["3"],
+            },
         ],
         errors: [
             "(if)",
             "(if #t)",
             "(if #t 1)",
             "(if #f 1 2 3)",
+            "(strictIf 5 1 2)",
+            "(strictIf #t 5)",
+            "(strictIf)",
+            "(stricktIf #t 1 2 3)",
+            `(cond
+    [#f 1]
+    [#f 2])`,
+            `(cond
+    [20]
+    [#t 5])`
         ],
     },
     {
@@ -117,6 +151,7 @@ export const features: { label: string, cases: { input: string, output: string[]
             { input: "(let (f (lambda (x y) (+ x y))) (f 2 3))", output: ["5"]},
             { input: `(let (f (lambda () "foo")) (f))`, output: ['"foo"']},
             { input: `(let (f (lambda () "foo")) f)`, output: ["#function"]},
+            { input: "((lambda (x y z) (+ x y z)) 1 2 3)", output: ["6"]},
         ],
         errors: [
             "(lambda (x y 10) (+ x y 10))",
@@ -124,19 +159,6 @@ export const features: { label: string, cases: { input: string, output: string[]
             "(lamda 10 10)",
             "(lambda)",
             "(lambda x (+ x 1) 10)",
-        ],
-    },
-    {
-        label: "strictIf",
-        cases: [
-            { input: "(strictIf #t 1 2)", output: ["1"] },
-            { input: "(strictIf (= 1 2) 1 2)", output: ["2"] },
-        ],
-        errors: [
-            "(strictIf 5 1 2)",
-            "(strictIf #t 5)",
-            "(strictIf)",
-            "(stricktIf #t 1 2 3)",
         ],
     },
     {
@@ -172,13 +194,73 @@ export const features: { label: string, cases: { input: string, output: string[]
     (add2 x y))`,
                 output: ["50"],
             },
+            {
+                input: "(local () #t)",
+                output: ["true"],
+            },
+            {
+                input: "(+ 3 (local ((define x 2)) x))",
+                output: ["5"],
+            },
         ],
         errors: [
             "(let x 3 x)",
             "(let)",
             "(let (x 3))",
             "(define)",
-            // TODO other errors
+            "(define 3 4)",
+            '(define (myFun a b "foo") 10)',
+            '(define (myFun a b))',
+            '(define (#t a b) "foo")',
+            '(local ((+ 3 2)) 10)',
+            "(local 1 2)",
+            "(local ())",
+            "(local ((define x 2)))",
+            "(+ 3 (define a 1))",
+            "(+ 2 4 a)",
+        ],
+    },
+    {
+        label: "errors",
+        cases: [
+            {
+                input: '(if #t 1 (error "should not happen"))',
+                output: ["1"],
+            },
+        ],
+        errors: [
+            '(error "msg here")',
+            '(error 3)',
+        ],
+    },
+    {
+        label: "program syntax",
+        cases: [
+            {
+                input: '1 "foo" #t (lambda () 2)',
+                output: ["1", '"foo"', "true", "#function"],
+            },
+            {
+                input: `(define myVal 10)
+(define (myF x) (* x 2))
+(myF 3)
+(myF myVal)`,
+                output: ["6", "20"],
+            },
+            {
+                input: `(+ 2 3) [+ 2 3]`,
+                output: ["5", "5"],
+            },
+        ],
+        errors: [
+            "(() 3)",
+            "(((lambda () ()) 4) 5)",
+            "(false 2)",
+            "(true)",
+            "(+ 3 4)))",
+            "(",
+            "[",
+            "(+ 3 4]",
         ],
     }
 ];
