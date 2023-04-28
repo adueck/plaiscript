@@ -5,7 +5,7 @@ import { funMacro, macros } from "./macros";
 // SL -> ( SP )
 // A -> number | boolean | string
 
-export function evaluateMiniLisp(sp: SExpr[]): Value[] {
+export function interp(sp: SExpr[]): Value[] {
     const varTable: Values = {};
     // evaluate root SP
     return sp.reduce((arr, s) => {

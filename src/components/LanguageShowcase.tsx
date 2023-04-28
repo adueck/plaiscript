@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { printValue } from '../lib/print-value';
+import { features } from '../language/features';
+import Toast from "react-bootstrap/Toast";
+
+type FeatureName = typeof features[number]["label"];
 
 function LanguageShowCase({ tokenizer, parser, evaluator, grammar, examples }: {
     tokenizer: (l: string) => (string | number)[],
@@ -12,6 +16,13 @@ function LanguageShowCase({ tokenizer, parser, evaluator, grammar, examples }: {
   const [error, setError] = useState<string>("");
   const [result, setResult] = useState<Value[]>([]);
   const [tree, setTree] = useState<SExpr[]>([]);
+  const [featureSelected, setFeatureSelected] = useState<undefined | typeof features[number]["label"]>(undefined);
+  function selectFeature(f: FeatureName) {
+    if (f === featureSelected) {
+      setFeatureSelected(undefined);
+    }
+    setFeatureSelected(f);
+  }
   function handleCalculate(text: string) {
     if (!text) {
       setTree([]);
@@ -57,20 +68,34 @@ function LanguageShowCase({ tokenizer, parser, evaluator, grammar, examples }: {
 (fibb 7)`}
         </code>
       </pre>
-      {/* <details className="mb-3">
-        <summary>Examples</summary>
-        {examples.map((ex) => <div key={ex.input} className="d-flex flex-row align-items-center">
-          <button
-            className="btn btn-sm btn-light me-2"
-            onClick={() => loadExample(ex.input)}
-          >try</button>
-          <div>
-            <pre style={{ margin: "0.5rem 0", padding: "0" }}>{`${ex.input}
-${`>>`} ${JSON.stringify(ex.value)}`
-}</pre>
-          </div>
-      </div>)}
-      </details> */}
+      <div>
+        <h5>Features / Examples</h5>
+        <ul className="nav">
+          {features.map((feature) => (
+            <li
+              className="nav-item flex-wrap"
+              key={feature.label}
+              onClick={() => selectFeature(feature.label as FeatureName)}
+            >
+              <div className="nav-link clickable">{feature.label}</div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <Toast className="mb-3 mt-2" style={{ width: "100%" }} show={!!featureSelected} onClose={() => setFeatureSelected(undefined)}>
+        <Toast.Header>
+          <strong className="me-auto">{featureSelected}</strong>
+        </Toast.Header>
+        <Toast.Body>
+          <code>
+            <pre>
+              {features.find(f => f.label === featureSelected)?.cases.map<string>((c) => (
+                `${c.input}\n> ${c.output.join(" ")}`
+              )).join("\n")}
+            </pre>
+          </code>
+        </Toast.Body>
+      </Toast>
       <div className="mb-2">
         <label className="form-label">Input:</label>
         <textarea

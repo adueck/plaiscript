@@ -1,5 +1,5 @@
 import LanguageShowCase from './components/LanguageShowcase';
-import { evaluateMiniLisp } from './language/evaluator';
+import { interp } from './language/interpreter';
 import { miniLispGrammar } from './language/grammar';
 import { parseMiniLisp } from './language/parser';
 import { miniLispTokenizer } from './language/tokenizer';
@@ -13,7 +13,7 @@ function App() {
     <p className="small"><a href={repo}>Source Code</a> - Textbook: <a href={plai}>Programming Languages: Application and Interpretation</a></p>
     <LanguageShowCase
       tokenizer={miniLispTokenizer}
-      evaluator={evaluateMiniLisp}
+      evaluator={interp}
       parser={parseMiniLisp}
       grammar={miniLispGrammar}
       examples={[]}

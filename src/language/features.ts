@@ -10,6 +10,7 @@ export const features: { label: string, cases: { input: string, output: string[]
             { input: "false", output: ["false"] },
             { input: "#true", output: ["true"] },
             { input: "#false", output: ["false"] },
+            { input: "()", output: ["'()"] },
         ],
         errors: [],
     },
@@ -152,12 +153,32 @@ export const features: { label: string, cases: { input: string, output: string[]
             (f 5))))`,
                 output: ["2"],
             },
-            // todo define statements
+            {
+                input: `(define myVal 100)
+(define another (+ myVal 10))
+(+ another 1)`,
+                output: ["111"],
+            },
+            {
+                input: `(define (add1 x) (+ x 1))
+(add1 20)`,
+                output: ["21"],
+            },
+            {
+                input: `(local
+    ((define x 20)
+     (define y 30)
+     (define (add2 a b) (+ a b)))
+    (add2 x y))`,
+                output: ["50"],
+            },
         ],
         errors: [
             "(let x 3 x)",
             "(let)",
             "(let (x 3))",
+            "(define)",
+            // TODO other errors
         ],
     }
 ];
