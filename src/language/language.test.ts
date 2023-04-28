@@ -114,6 +114,20 @@ const tests: { label: string, cases: { input: string, output: string[] }[], erro
             "(if #f 1 2 3)",
         ],
     },
+    {
+        label: "lambdas",
+        cases: [
+            { input: "(lambda (x y) (+ x y))", output: ["function with args: x y"]},
+            { input: "(let (f (lambda (x y) (+ x y))) (f 2 3))", output: ["5"]},
+        ],
+        errors: [
+            "(lambda (x y 10) (+ x y 10))",
+            "(lambda x (+ x 1))",
+            "(lamda 10 10)",
+            "(lambda)",
+            "(lambda x (+ x 1) 10)",
+        ],
+    }
 ];
 
 tests.forEach(({ label, cases, errors }) => {
