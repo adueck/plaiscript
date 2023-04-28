@@ -15,6 +15,9 @@ function LanguageShowCase({ tokenizer, parser, evaluator, grammar, examples }: {
   function handleCalculate(text: string) {
     if (!text) {
       setTree([]);
+      setError("");
+      setResult([]);
+      return;
     }
     try {
       const e = parser(tokenizer(text));
@@ -73,7 +76,7 @@ ${`>>`} ${JSON.stringify(ex.value)}`
         <label className="form-label">Input:</label>
         <textarea
           style={{ fontFamily: "monospace" }}
-          className="form-control"
+          className={`form-control ${error ? "is-invalid" : result.length > 0 ? "is-valid" : ""}`}
           rows={5}
           value={text}
           onChange={handleTextChange}

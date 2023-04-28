@@ -165,8 +165,6 @@ export function evaluateMiniLisp(sp: SE[]): Value[] {
             if (elems.length !== 3) {
                 throw new Error("if statement requires three arguments");
             }
-            const con = evaluateSE(elems[0], localVars);
-            console.log({ con });
             return evaluateSE(elems[0], localVars)
                 ? evaluateSE(elems[1], localVars)
                 : evaluateSE(elems[2], localVars);
