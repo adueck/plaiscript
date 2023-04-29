@@ -21,7 +21,7 @@ function letMacro(sl: SExpr[]): SExpr {
         [["define", varName, varVal]],
         body,
     ];
-} 
+}
 
 export function funMacro(sl: SExpr[]): SExpr {
     /* istanbul ignore next */

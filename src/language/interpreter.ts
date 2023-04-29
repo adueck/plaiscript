@@ -1,4 +1,6 @@
 import { funMacro, macros } from "./macros";
+const mathPrimitives = ["+", "-", "*", "/", "=", "<", ">", "<=", ">="] as const;
+type MathPrimitive = typeof mathPrimitives[number];
 
 export function interp(sp: SExpr[]): Value[] {
     const varTable: Values = {};
@@ -50,110 +52,23 @@ export function interp(sp: SExpr[]): Value[] {
             ? fS
             // this means I can use "strings" as function names! Is this a good idea??
             : evaluateSE(fS, localVars);
-        if (typeof f === "boolean") {
-            throw new Error("boolean is not a function");
+        if (mathPrimitives.includes(f as MathPrimitive)) {
+            return evalMathPrimitive(f as MathPrimitive, elems, localVars);
         }
-        if (["+", "-", "*", "/", "=", "<", ">", "<=", ">="].includes(f as string)) {
-            if (f === "+") {
-                return elems.reduce<number>((val, e) => {
-                    return val + getNum(e, f);
-                }, 0);
-            }
-            if (f === "-") {
-                if (elems.length === 0) {
-                    throw new Error("- requires 1 or more argument");
-                }
-                if (elems.length === 1) {
-                    return - getNum(elems[0], f);
-                }
-                return elems.slice(1).reduce<number>((val, e) => {
-                    return val - getNum(e, f);
-                }, getNum(elems[0], f));
-            }
-            if (f === "*") {
-                return elems.reduce<number>((val, e) => {
-                    return val * getNum(e, f);
-                }, 1);
-            }
-            if (f === "/") {
-                if (elems.length < 1) {
-                    throw new Error("/ requires 1 or more arguments");
-                }
-                const [first, ...rest] = elems;
-                if (elems.length === 1) {
-                    return 1 / getNum(first, f);
-                }
-                return rest.reduce<number>((val, e) => {
-                    return val / getNum(e, f);
-                }, getNum(first, f));
-            }
-            if (f === "=") {
-                return dist(elems, (a, b) => a === b, f);
-            }
-            if (f === ">") {
-                return dist(elems, (a, b) => a > b, f);
-            }
-            if (f === "<") {
-                return dist(elems, (a, b) => a < b, f);
-            }
-            if (f === ">=") {
-                return dist(elems, (a, b) => a >= b, f);
-            }
-            if (f === "<=") {
-                return dist(elems, (a, b) => a <= b, f);
-            }
-            function dist(args: SExpr[], f: (a: Value, b: Value) => boolean, fName: string): boolean {
-                if (args.length === 0) {
-                    throw new Error(`${fName} requires 1 or more arguments`);
-                }
-                const [x, y, ...rest] = args;
-                if (x === undefined || y === undefined) {
-                    return true;
-                }
-                const xv = evaluateSE(x, localVars);
-                const yv = evaluateSE(y, localVars);
-                return f(xv, yv) && dist([y, ...rest], f, fName);
-            }
-            function getNum(se: SExpr, fn: string): number {
-                const n = evaluateSE(se, localVars);
-                if (typeof n !== "number") {
-                    throw new Error(`each argument for ${fn} must be a number`);
-                }
-                return n;
-            }
-        }
-        if (f === "boolean?") {
+        if (typeof f === "string" && f.endsWith("?")) {
             if (elems.length === 0) {
-                throw new Error(`boolean? requires 1 or more arguments`);
+                throw new Error(`${f} requires 1 or more arguments`);
             }
-            return typeof evaluateSE(elems[0], localVars) === "boolean";
-        }
-        if (f === "string?") {
-            if (elems.length === 0) {
-                throw new Error(`string? requires 1 or more arguments`);
+            if (["boolean?", "string?", "number?", "function?"].includes(f)) {
+                return typeof evaluateSE(elems[0], localVars) === (f === "function?"
+                    ? "object"
+                    : f.slice(0, -1));
             }
-            return typeof evaluateSE(elems[0], localVars) === "string";
-        }
-        if (f === "number?") {
-            if (elems.length === 0) {
-                throw new Error(`number? requires 1 or more arguments`);
+            if (f === "empty?") {
+                return Array.isArray(evaluateSE(elems[0], localVars)); 
             }
-            return typeof evaluateSE(elems[0], localVars) === "number";
         }
-        if (f === "function?") {
-            if (elems.length === 0) {
-                throw new Error(`function? requires 1 or more arguments`);
-            }
-            return typeof evaluateSE(elems[0], localVars) === "object";
-            
-        }
-        if (f === "empty?") {
-            if (elems.length === 0) {
-                throw new Error(`empty? requires 1 or more arguments`);
-            }
-            return Array.isArray(evaluateSE(elems[0], localVars));
-            
-        }
+
         if (f === "local") {
             const defines = elems[0];
             const body = elems[1];
@@ -196,6 +111,9 @@ export function interp(sp: SExpr[]): Value[] {
         if (f === "error") {
             const msg = evaluateSE(elems[0], localVars);
             throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
+        }
+        if (typeof f === "boolean") {
+            throw new Error("boolean is not a function");
         }
         const fv = typeof f === "object" ? f : localVars[f];
         if (typeof fv !== "object") {
@@ -240,4 +158,78 @@ export function interp(sp: SExpr[]): Value[] {
         }
         return val;
     }
+
+    function evalMathPrimitive(f: MathPrimitive, elems: SExpr[], localVars: Values): Value {
+        if (f === "+") {
+            return elems.reduce<number>((val, e) => {
+                return val + getNum(e, f);
+            }, 0);
+        }
+        if (f === "-") {
+            if (elems.length === 0) {
+                throw new Error("- requires 1 or more argument");
+            }
+            if (elems.length === 1) {
+                return - getNum(elems[0], f);
+            }
+            return elems.slice(1).reduce<number>((val, e) => {
+                return val - getNum(e, f);
+            }, getNum(elems[0], f));
+        }
+        if (f === "*") {
+            return elems.reduce<number>((val, e) => {
+                return val * getNum(e, f);
+            }, 1);
+        }
+        if (f === "/") {
+            if (elems.length < 1) {
+                throw new Error("/ requires 1 or more arguments");
+            }
+            const [first, ...rest] = elems;
+            if (elems.length === 1) {
+                return 1 / getNum(first, f);
+            }
+            return rest.reduce<number>((val, e) => {
+                return val / getNum(e, f);
+            }, getNum(first, f));
+        }
+        if (f === "=") {
+            return dist(elems, (a, b) => a === b, f);
+        }
+        if (f === ">") {
+            return dist(elems, (a, b) => a > b, f);
+        }
+        if (f === "<") {
+            return dist(elems, (a, b) => a < b, f);
+        }
+        if (f === ">=") {
+            return dist(elems, (a, b) => a >= b, f);
+        }
+        if (f === "<=") {
+            return dist(elems, (a, b) => a <= b, f);
+        }
+        /* istanbul ignore next */
+        const _exhaustiveCheck: never = f;
+        /* istanbul ignore next */
+        return _exhaustiveCheck;
+        function dist(args: SExpr[], f: (a: Value, b: Value) => boolean, fName: string): boolean {
+            if (args.length === 0) {
+                throw new Error(`${fName} requires 1 or more arguments`);
+            }
+            const [x, y, ...rest] = args;
+            if (x === undefined || y === undefined) {
+                return true;
+            }
+            const xv = evaluateSE(x, localVars);
+            const yv = evaluateSE(y, localVars);
+            return f(xv, yv) && dist([y, ...rest], f, fName);
+        }
+        function getNum(se: SExpr, fn: string): number {
+            const n = evaluateSE(se, localVars);
+            if (typeof n !== "number") {
+                throw new Error(`each argument for ${fn} must be a number`);
+            }
+            return n;
+        }
+    } 
 }
