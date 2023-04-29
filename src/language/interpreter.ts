@@ -1,10 +1,5 @@
 import { funMacro, macros } from "./macros";
 
-// SP -> SE | SE SP
-// SE -> A | SL
-// SL -> ( SP )
-// A -> number | boolean | string
-
 export function interp(sp: SExpr[]): Value[] {
     const varTable: Values = {};
     // evaluate root SP
@@ -58,7 +53,7 @@ export function interp(sp: SExpr[]): Value[] {
         if (typeof f === "boolean") {
             throw new Error("boolean is not a function");
         }
-        if (["+", "-", "*", "/", "=", "<", ">"].includes(f as string)) {
+        if (["+", "-", "*", "/", "=", "<", ">", "<=", ">="].includes(f as string)) {
             if (f === "+") {
                 return elems.reduce<number>((val, e) => {
                     return val + getNum(e, f);
@@ -100,6 +95,12 @@ export function interp(sp: SExpr[]): Value[] {
             }
             if (f === "<") {
                 return dist(elems, (a, b) => a < b, f);
+            }
+            if (f === ">=") {
+                return dist(elems, (a, b) => a >= b, f);
+            }
+            if (f === "<=") {
+                return dist(elems, (a, b) => a <= b, f);
             }
             function dist(args: SExpr[], f: (a: Value, b: Value) => boolean, fName: string): boolean {
                 if (args.length === 0) {
@@ -239,5 +240,4 @@ export function interp(sp: SExpr[]): Value[] {
         }
         return val;
     }
-
 }

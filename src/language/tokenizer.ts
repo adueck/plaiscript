@@ -13,6 +13,16 @@ export function tokenizer(l: string): (number | string)[] {
         }
     }
     for (let char of chars) {
+        if (char === ">" || char === "<") {
+            cleanOutChars();
+            currentChars = char;
+            continue;
+        }
+        if (char === "=" && [">", "<"].includes(currentChars)) {
+            tokens.push(currentChars + char);
+            currentChars = "";
+            continue;
+        }
         if (char === " " || char === "\t") {
             if (inString) {
                 currentChars += char;

@@ -9,7 +9,6 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
     tokenizer: (l: string) => (string | number)[],
     parser: (t: (string | number)[]) => SExpr[],
     evaluator: (x: SExpr[]) => Value[],
-    grammar: string,
     examples: { input: string, value: any }[],
 }) {
   const [text, setText] = useState("");
@@ -82,7 +81,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
         <Toast.Header>
           <strong className="me-auto">{featureSelected}</strong>
         </Toast.Header>
-        <Toast.Body>
+        <Toast.Body style={{ maxHeight: "300px", overflowY: "auto" }}>
           <code>
             <pre>
               {features.find(f => f.label === featureSelected)?.cases.map<string>((c) => (

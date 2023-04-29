@@ -1,6 +1,5 @@
 import LanguageShowCase from './components/LanguageShowcase';
 import { interp } from './language/interpreter';
-import { miniLispGrammar } from './language/grammar';
 import { parse } from './language/parser';
 import { tokenizer } from './language/tokenizer';
 const repo = "https://github.com/adueck/plaiscript";
@@ -15,7 +14,6 @@ function App() {
       tokenizer={tokenizer}
       evaluator={interp}
       parser={parse}
-      grammar={miniLispGrammar}
       examples={[]}
     />
     <p className="text-muted small mt-4">Made by <a href="https://adueck.github.io/">Adam Dueck</a> - <a href={repo}>source code</a></p>
