@@ -2,6 +2,8 @@ import { funMacro, macros } from "./macros";
 const mathPrimitives = ["+", "-", "*", "/", "=", "<", ">", "<=", ">="] as const;
 type MathPrimitive = typeof mathPrimitives[number];
 
+// TODO: difference between () and '() in Racket
+
 export function interp(sp: SExpr[]): Value[] {
     const varTable: Values = {};
     // evaluate root SP
@@ -194,35 +196,34 @@ export function interp(sp: SExpr[]): Value[] {
             }, getNum(first, f));
         }
         if (f === "=") {
-            return dist(elems, (a, b) => a === b, f);
+            return dist(elems, (a, b) => a === b);
         }
         if (f === ">") {
-            return dist(elems, (a, b) => a > b, f);
+            return dist(elems, (a, b) => a > b);
         }
         if (f === "<") {
-            return dist(elems, (a, b) => a < b, f);
+            return dist(elems, (a, b) => a < b);
         }
         if (f === ">=") {
-            return dist(elems, (a, b) => a >= b, f);
+            return dist(elems, (a, b) => a >= b);
         }
         if (f === "<=") {
-            return dist(elems, (a, b) => a <= b, f);
+            return dist(elems, (a, b) => a <= b);
         }
         /* istanbul ignore next */
         const _exhaustiveCheck: never = f;
         /* istanbul ignore next */
         return _exhaustiveCheck;
-        function dist(args: SExpr[], f: (a: Value, b: Value) => boolean, fName: string): boolean {
+
+        function dist(args: SExpr[], fn: (a: Value, b: Value) => boolean): boolean {
             if (args.length === 0) {
-                throw new Error(`${fName} requires 1 or more arguments`);
+                throw new Error(`${f} requires 1 or more arguments`);
             }
             const [x, y, ...rest] = args;
             if (x === undefined || y === undefined) {
                 return true;
             }
-            const xv = evaluateSE(x, localVars);
-            const yv = evaluateSE(y, localVars);
-            return f(xv, yv) && dist([y, ...rest], f, fName);
+            return fn(evaluateSE(x, localVars), evaluateSE(y, localVars)) && dist([y, ...rest], fn);
         }
         function getNum(se: SExpr, fn: string): number {
             const n = evaluateSE(se, localVars);

@@ -15,12 +15,11 @@ function letMacro(sl: SExpr[]): SExpr {
     if (sl[2] === undefined) {
         throw new Error("body missing in let statement");
     }
-    const [letLabel, [varName, varVal], body] = sl;
-    return [
-        "local",
-        [["define", varName, varVal]],
-        body,
-    ];
+    const [letI, [varName, varVal],
+             body] = sl;
+    return ["local",
+             [["define", varName, varVal]],
+             body];
 }
 
 export function funMacro(sl: SExpr[]): SExpr {
@@ -38,12 +37,11 @@ export function funMacro(sl: SExpr[]): SExpr {
     if (sl[2] === undefined) {
         throw new Error("body missing in function definition");
     }
-    const [defLabel, [funName, ...args], body] = sl;
-    return [
-        "define",
-        funName,
-        ["lambda", args, body],
-    ];
+    const [defineI, [funName, ...args],
+            body] = sl;
+    return ["define",
+              funName,
+              ["lambda", args, body]];
 }
 
 function strictIfMacro(sl: SExpr[]): SExpr {
@@ -54,13 +52,17 @@ function strictIfMacro(sl: SExpr[]): SExpr {
     if (sl.length !== 4) {
         throw new Error("strictlyIf requires 3 arguments");
     }
-    const [label, cond, thenBranch, elseBranch] = sl;
-    return [
-        "if",
-        ["boolean?", cond],
-        ["if", cond, thenBranch, elseBranch],
-        ["error", { s: "expected a boolean for strictIf" }],
-    ];
+    // (define-syntax strict-if
+    //   (syntax-rules ()
+    //     [(strict-if C T E)
+    //      (if (boolean? C)
+    //          (if C T E)
+    //          (error 'strict-if "expected a boolean"))]))
+    const [strictIfI, C, T, E] = sl;
+    return ["if",
+            ["boolean?", C],
+            ["if", C, T, E],
+            ["error", { s: "expected a boolean for strictIf" }]];
 }
 
 function condMacro(se: SExpr[]): SExpr {
@@ -68,17 +70,22 @@ function condMacro(se: SExpr[]): SExpr {
     if (se[0] !== "cond") {
         throw new Error("invalid macro");
     }
-    if (se[1] === undefined) {
-        throw new Error("no conditional cases were true");
-    }
     if (!Array.isArray(se[1]) || se[1].length < 2) {
         throw new Error("invalid conditional case");
     }
-    const [condLabel, [q0, a0], ...otherConds] = se;
-    return [
-        "if",
-        q0,
-        a0,
-        ["cond", ...otherConds],
-    ];
+    // (define-syntax my-cond
+    //   (syntax-rules ()
+    //     [(my-cond) (error 'my-cond "should not get here")]
+    //     [(my-cond [q0 a0] [q1 a1] ...)
+    //       (if q0
+    //           a0
+    //           (my-cond [q1 a1] ...))]))
+    if (se[1] === undefined) {
+        throw new Error("no conditional cases were true");
+    }
+    const [condI, [q0, a0], ...otherConds] = se;
+    return ["if",
+              q0,
+              a0,
+              ["cond", ...otherConds]];
 }

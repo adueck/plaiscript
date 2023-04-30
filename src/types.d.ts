@@ -2,7 +2,9 @@
 
 type SExpr = Atom | SExpr[];
 
-type Atom = boolean | string | { s: string } | number;
+type Atom = boolean | Identifier | Str | number;
+type Identifier = string;
+type Str = { s: string };
 
 // Symantics Types
 
