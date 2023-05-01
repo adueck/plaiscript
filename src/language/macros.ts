@@ -2,6 +2,7 @@ export const macros: Partial<Record<string, (se: SExpr[]) => SExpr>> = {
     let: letMacro,
     strictIf: strictIfMacro,
     cond: condMacro,
+    list: listMacro,
 }
 
 function letMacro(sl: SExpr[]): SExpr {
@@ -88,4 +89,15 @@ function condMacro(se: SExpr[]): SExpr {
               q0,
               a0,
               ["cond", ...otherConds]];
+}
+
+function listMacro(se: SExpr[]): SExpr {
+    if (se[0] !== "list") {
+        throw new Error("invalid macro");
+    }
+    const [listI, first, ...rest] = se;
+    if (first === undefined) {
+        return [];
+    }
+    return ["cons", first, ["list", ...rest]];
 }

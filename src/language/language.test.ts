@@ -5,7 +5,7 @@ import { tokenizer } from "./tokenizer";
 import { features } from "./features";
 
 function evaluateFull(input: string): Value[] {
-    return interp(parse(tokenizer(input)));
+    return interp(parse(tokenizer(input))).value;
 }
 
 features.forEach(({ label, cases, errors }) => {

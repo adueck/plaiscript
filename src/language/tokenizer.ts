@@ -1,7 +1,9 @@
+import { stdLib } from "./std-lib";
+
 const symbols = ["(", ")", "+", "-", "*", "/", "=", "<", ">", ",", "[", "]", "{", "}", '"'];
 
 export function tokenizer(l: string): (number | string)[] {
-    const chars = l.split("");
+    const chars = (`${stdLib} ${l}`).split("");
     let tokens: (number | string)[] = [];
     let currentChars = "";
     let inString: boolean = false;

@@ -1,20 +1,25 @@
 import { funMacro, macros } from "./macros";
+import { parse } from "./parser";
+import { tokenizer } from "./tokenizer";
 const mathPrimitives = ["+", "-", "*", "/", "=", "<", ">", "<=", ">="] as const;
 type MathPrimitive = typeof mathPrimitives[number];
 
 // TODO: difference between () and '() in Racket
 
-export function interp(sp: SExpr[]): Value[] {
+export function interp(sp: SExpr[]): { value: Value[], env: Values } {
     const varTable: Values = {};
     // evaluate root SP
-    return sp.reduce((arr, s) => {
-        // check for top-level defines here
-        if (Array.isArray(s) && s[0] === "define") {
-            Object.assign(varTable, handleDefine(s, varTable));
-            return arr;
-        }
-        return [...arr, evaluateSE(s, varTable)];
-    }, [] as Value[]);
+    return {
+        value: sp.reduce((arr, s) => {
+            // check for top-level defines here
+            if (Array.isArray(s) && s[0] === "define") {
+                Object.assign(varTable, handleDefine(s, varTable));
+                return arr;
+            }
+            return [...arr, evaluateSE(s, varTable)];
+        }, [] as Value[]),
+        env: varTable,
+    };
 
     function handleDefine(s: SExpr, localVars: Values): Values {
         if (!Array.isArray(s) || s[0] !== "define") {

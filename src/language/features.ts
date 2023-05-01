@@ -266,6 +266,27 @@ bar"`
             "[",
             "(+ 3 4]",
         ],
+    },
+    {
+        label: "lists",
+        cases: [
+            {
+                input: `(define myL (cons 2 (cons 3 (cons 10 ()))))
+(define (addUp l t)
+    (if (empty? l)
+        t
+        (addUp (rest l) (+ (first l) t))))
+(addUp myL 0)`,
+                output: ["15"],
+            },
+            {
+                input: `(define myL (list 2 3 10))
+(fold (lambda (x y) (+ x y)) 0 myL)
+(first (map (lambda (x) (* x 2)) myL))`,
+                output: ["15","4"],
+            },
+        ],
+        errors: [],
     }
 ];
 

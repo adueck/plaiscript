@@ -12,7 +12,7 @@ function App() {
     <p className="small"><a href={repo}>Source Code</a> - Textbook: <a href={plai}>Programming Languages: Application and Interpretation</a></p>
     <LanguageShowCase
       tokenizer={tokenizer}
-      evaluator={interp}
+      evaluator={(se: SExpr[]) => interp(se).value}
       parser={parse}
       examples={[]}
     />

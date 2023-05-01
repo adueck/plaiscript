@@ -1,4 +1,5 @@
 import { useTokens } from "../lib/useTokens";
+import { tokenizer } from "./tokenizer";
 
 // SP -> SE | SE SP
 // SE -> A | SL
