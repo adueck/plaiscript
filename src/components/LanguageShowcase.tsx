@@ -91,9 +91,10 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
           </code>
         </Toast.Body>
       </Toast>
-      <div className="mb-2">
+      <div className="mb-2 mt-2">
         <label className="form-label">Input:</label>
         <textarea
+          placeholder="Enter code for evaluation..."
           style={{ fontFamily: "monospace" }}
           className={`form-control ${error ? "is-invalid" : result.length > 0 ? "is-valid" : ""}`}
           rows={5}
