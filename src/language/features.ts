@@ -272,6 +272,7 @@ bar"`
         cases: [
             {
                 input: `(define myL (cons 2 (cons 3 (cons 10 ()))))
+; this is a comment line
 (define (addUp l t)
     (if (empty? l)
         t

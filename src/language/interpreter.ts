@@ -1,6 +1,4 @@
 import { funMacro, macros } from "./macros";
-import { parse } from "./parser";
-import { tokenizer } from "./tokenizer";
 const mathPrimitives = ["+", "-", "*", "/", "=", "<", ">", "<=", ">="] as const;
 type MathPrimitive = typeof mathPrimitives[number];
 
@@ -161,6 +159,7 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
         }
         const val = localVars[a];
         if (localVars[a] === undefined) {
+            console.log({ sp });
             throw new Error(`undefined variable ${a}`);
         }
         return val;
