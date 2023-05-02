@@ -11,8 +11,16 @@ export function tokenizer(l: string): (number | string)[] {
     while (i < chars.length) {
         scanToken();
     }
+    if (i !== chars.length) {
+        throw new Error("trailing token");
+    }
+    return tokens;
     function scanToken() {
         const doubPeek = chars.slice(i, i+2);
+        if (doubPeek === "#|") {
+            skipBlockComment();
+            return;
+        }
         if (diSymbols.includes(doubPeek)) {
             tokens.push(doubPeek);
             i += 2;
@@ -30,7 +38,7 @@ export function tokenizer(l: string): (number | string)[] {
         }
         if (peek === ";") {
             i++;
-            skipComment();
+            skipLineComment();
             return;
         }
         if (peek === '"') {
@@ -46,16 +54,28 @@ export function tokenizer(l: string): (number | string)[] {
             scanIdentifier();
             return;
         }
-        console.log(l);
         throw new Error(`illegal token: ${peek}`);
     }
-    function skipComment() {
+    function skipLineComment() {
         while (chars[i] !== "\n") {
             if (chars[i] === undefined) {
                 return;
             }
             i++;
         }
+    }
+    function skipBlockComment() {
+        i += 2;
+        while (chars.slice(i, i+2) !== "|#") {
+            if (chars[i] === undefined) {
+                throw new Error("unterminated block comment");
+            }
+            if (chars.slice(i, i+2) === "#|") {
+                skipBlockComment();
+            }
+            i++;
+        }
+        i += 2;
     }
     function scanIdentifier() {
         let content: string = "";
@@ -89,7 +109,6 @@ export function tokenizer(l: string): (number | string)[] {
         }
         tokens.push(num);
     }
-    return tokens;
 
     function isAlpha(c: string): boolean {
         return (c >= 'a' && c <= 'z') ||

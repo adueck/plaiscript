@@ -3,6 +3,7 @@ export const features: { label: string, cases: { input: string, output: string[]
         label: "atoms",
         cases: [
             { input: "4", output: ["4"] },
+            { input: "4.32", output: ["4.32"]},
             { input: `"foo"`, output: ['"foo"'] },
             { input: `"this is a string"`, output: ['"this is a string"']},
             { input: `#t`, output: ["true"] },
@@ -17,7 +18,7 @@ export const features: { label: string, cases: { input: string, output: string[]
             `"foo`,
             `foo"`,
             `"foo
-bar"`
+bar"`,
         ],
     },
     {
@@ -272,7 +273,6 @@ bar"`
         cases: [
             {
                 input: `(define myL (cons 2 (cons 3 (cons 10 ()))))
-; this is a comment line
 (define (addUp l t)
     (if (empty? l)
         t
@@ -288,6 +288,31 @@ bar"`
             },
         ],
         errors: [],
-    }
+    },
+    {
+        label: "comments",
+        cases: [
+            {
+                input: `(+ 1 2)
+; this is a line comment
+"foo" ; another comment at the end of line`,
+                output: ["3", '"foo"'],
+            },
+            {
+                input: `(+ 1 2) #| this
+is a block comment
+and it ends after this -> |# "foo"`,
+                output: ["3", '"foo"'],
+            },
+            {
+                input: `(+ 1 2) #| this
+is a block comment #| nested block comment |#
+and it ends after this -> |# "foo"`,
+                output: ["3", '"foo"'],
+            },
+        ],
+        errors: ["21 #| block comment"],
+    },
+
 ];
 
