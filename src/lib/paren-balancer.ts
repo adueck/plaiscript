@@ -7,7 +7,6 @@ export function balanceParens(t: string): false | number {
     let i = t.length - 1;
     const closer = t[i];
     if (closer !== ")" && closer !== "]") {
-        return false;
         throw new Error("input must end in a closing bracket");
     }
     i--;
