@@ -11,18 +11,23 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
     evaluator: (x: SExpr[]) => Value[],
     examples: { input: string, value: any }[],
 }) {
+  // const textarea = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState<string>("");
   const [result, setResult] = useState<Value[]>([]);
   const [tree, setTree] = useState<SExpr[]>([]);
   const [featureSelected, setFeatureSelected] = useState<undefined | typeof features[number]["label"]>(undefined);
+  // useEffect(() => {
+  //   // @ts-ignore
+  //   $(".my-textarea").highlightWithinTextarea({ highlight: "foo" });
+  // }, []);
   function selectFeature(f: FeatureName) {
     if (f === featureSelected) {
       setFeatureSelected(undefined);
     }
     setFeatureSelected(f);
   }
-  function handleCalculate(text: string) {
+  function handleEvaluate() {
     if (!text) {
       setTree([]);
       setError("");
@@ -44,9 +49,17 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
     }
   }
   function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    const text = e.target.value;
-    handleCalculate(text)
-    setText(text);
+    const t = e.target.value;
+    setError("");
+    setResult([]);
+    setTree([]);
+    setText(t);
+    try {
+      parser(tokenizer(t));
+    } catch (e) {
+      // @ts-ignore
+      setError(e.message as string);
+    }
   }
   function handleClear() {
     setText("");
@@ -92,19 +105,22 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
         </Toast.Body>
       </Toast>
       <div className="mb-2 mt-2">
-        <label className="form-label">Input:</label>
+        {/* <label className="form-label">Input:</label> */}
         <textarea
           placeholder="Enter code for evaluation..."
           style={{ fontFamily: "monospace" }}
-          className={`form-control ${error ? "is-invalid" : result.length > 0 ? "is-valid" : ""}`}
+          className={`my-textarea form-control ${error ? "is-invalid" : result.length > 0 ? "is-valid" : ""}`}
           rows={5}
           value={text}
           onChange={handleTextChange}
         />
       </div>
-      <div className="d-flex flex-row justify-content-end">
+      <div className="d-flex flex-row justify-content-between">
         <div>
-          <button className="btn btn-sm btn-secondary" onClick={handleClear}>clear</button>
+          <button className="btn btn-primary" onClick={handleEvaluate}>evaluate</button>
+        </div>
+        <div>
+          <button className="btn btn-secondary" onClick={handleClear}>clear</button>
         </div>
       </div>
       {error && <div className="text-muted small mt-2"><samp>{error}</samp></div>}

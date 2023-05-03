@@ -159,7 +159,6 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
         }
         const val = localVars[a];
         if (localVars[a] === undefined) {
-            console.log({ sp });
             throw new Error(`undefined variable ${a}`);
         }
         return val;
