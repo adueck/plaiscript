@@ -95,9 +95,9 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
             if (elems.length !== 3) {
                 throw new Error("if statement requires three arguments");
             }
-            return evaluateSE(elems[0], localVars)
-                ? evaluateSE(elems[1], localVars)
-                : evaluateSE(elems[2], localVars);
+            return evaluateSE(elems[0], localVars) === false
+                ? evaluateSE(elems[2], localVars)
+                : evaluateSE(elems[1], localVars);
         }
         if (f === "lambda") {
             const args = elems[0];

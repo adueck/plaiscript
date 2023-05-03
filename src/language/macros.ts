@@ -134,13 +134,13 @@ function orMacro(se: SExpr[]): SExpr {
     if (se[0] !== "or") {
         throw new Error("invalid macro");
     }
-    const [orI, a, b, ...rest] = se;
-    if (a === undefined) {
+    const [orI, first, ...rest] = se;
+    if (first === undefined) {
         return false;
     }
-    return ["if", ["not", ["false?", a]],
-                  a,
-                  ["or", b, ...rest]];
+    return ["if", ["not", ["false?", first]],
+                  first,
+                  ["or", ...rest]];
 }
 
 function notMacro(se: SExpr[]): SExpr {
