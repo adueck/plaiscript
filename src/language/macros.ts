@@ -3,7 +3,10 @@ export const macros: Partial<Record<string, (se: SExpr[]) => SExpr>> = {
     strictIf: strictIfMacro,
     cond: condMacro,
     list: listMacro,
-}
+    and: andMacro,
+    not: notMacro,
+    or: orMacro,
+};
 
 function letMacro(sl: SExpr[]): SExpr {
     /* istanbul ignore next */
@@ -81,9 +84,10 @@ function condMacro(se: SExpr[]): SExpr {
     //       (if q0
     //           a0
     //           (my-cond [q1 a1] ...))]))
-    if (se[1] === undefined) {
-        throw new Error("no conditional cases were true");
-    }
+    // TODO: get this working
+    // if (se[1] === undefined) {
+    //     throw new Error("no conditional cases were true");
+    // }
     const [condI, [q0, a0], ...otherConds] = se;
     return ["if",
               q0,
@@ -92,6 +96,7 @@ function condMacro(se: SExpr[]): SExpr {
 }
 
 function listMacro(se: SExpr[]): SExpr {
+    /* istanbul ignore next */
     if (se[0] !== "list") {
         throw new Error("invalid macro");
     }
@@ -100,4 +105,52 @@ function listMacro(se: SExpr[]): SExpr {
         return [];
     }
     return ["cons", first, ["list", ...rest]];
+}
+
+function andMacro(se: SExpr[]): SExpr {
+    /* istanbul ignore next */
+    if (se[0] !== "and") {
+        throw new Error("invalid macro");
+    }
+    const [andI, a, b, ...rest] = se;
+    if (a === undefined) {
+        return true;
+    }
+    if (b === undefined) {
+        return a;
+    }
+    if (rest[0] === undefined) {
+        return ["if", ["not", ["false?", a]],
+                      b,
+                      false];
+    }
+    return ["if", ["not", ["false?", a]],
+                  ["and", b, ...rest],
+                  false];
+}
+
+function orMacro(se: SExpr[]): SExpr {
+    /* istanbul ignore next */
+    if (se[0] !== "or") {
+        throw new Error("invalid macro");
+    }
+    const [orI, a, b, ...rest] = se;
+    if (a === undefined) {
+        return false;
+    }
+    return ["if", ["not", ["false?", a]],
+                  a,
+                  ["or", b, ...rest]];
+}
+
+function notMacro(se: SExpr[]): SExpr {
+    /* istanbul ignore next */
+    if (se[0] !== "not") {
+        throw new Error("invalid macro");
+    }
+    if (se.length !== 2) {
+        throw new Error("not requires one argument");
+    }
+    const [notI, val] = se;
+    return ["false?", val];
 }

@@ -28,6 +28,11 @@ bar"`,
             { input: "(boolean? #t)", output: ["true"] },
             { input: `(boolean? "foo")`, output: ["false"] },
             { input: "(boolean? 43)", output: ["false"] },
+            { input: "(true? #t)", output: ["true"] },
+            { input: "(true? #f)", output: ["false"] },
+            { input: "(false? 0)", output: ["false"] },
+            { input: "(false? #t)", output: ["false"] },
+            { input: "(false? #f)", output: ["true"] },
             { input: "(number? 123)", output: ["true"] },
             { input: "(number? (+ 2 4))", output: ["true"] },
             { input: "(number? false)", output: ["false"] },
@@ -146,17 +151,109 @@ bar"`,
     [#f 2])`,
             `(cond
     [20]
-    [#t 5])`
+    [#t 5])`,
+            `(cond
+    [#f 3]
+    [(= 3 2) 1])`,
         ],
     },
     {
-        label: "lambdas",
+        label: "logic",
+        cases: [
+            {
+                input: "(and #t #t)",
+                output: ["true"],
+            },
+            {
+                input: "(and #t #f)",
+                output: ["false"],
+            },
+            {
+                input: "(and #t 8 4 #f 1)",
+                output: ["false"],
+            },
+            {
+                input: '(and 2 3 4 "foo" * 10)',
+                output: ["10"],
+            },
+            {
+                input: "(and #t)",
+                output: ["true"],
+            },
+            {
+                input: "(and)",
+                output: ["true"], 
+            },
+            {
+                input: "(and #f)",
+                output: ["false"],
+            },
+            {
+                input: "(not #t)",
+                output: ["false"],
+            },
+            {
+                input: "(not #f)",
+                output: ["true"],
+            },
+            {
+                input: "(not 23)",
+                output: ["false"],
+            },
+            {
+                input: "(or)",
+                output: ["false"],
+            },
+            {
+                input: "(or 3)",
+                output: ["3"],
+            },
+            {
+                input: "(or 2 3 4)",
+                output: ["2"],
+            },
+            {
+                input: "(or #f #f #f #f)",
+                output: ["false"],
+            },
+            {
+                input: "(or #f #f #f 9)",
+                output: ["9"],
+            },
+        ],
+        errors: [
+            "and",
+            "not",
+            "or",
+            "(not)",
+            "(not #t #t)",
+        ],
+    },
+    {
+        label: "functions",
         cases: [
             { input: "(lambda (x y) (+ x y))", output: ["#function"]},
             { input: "(let (f (lambda (x y) (+ x y))) (f 2 3))", output: ["5"]},
             { input: `(let (f (lambda () "foo")) (f))`, output: ['"foo"']},
             { input: `(let (f (lambda () "foo")) f)`, output: ["#function"]},
+            { input: "+", output: ["#function"] },
+            { input: ">=", output: ["#function"] },
             { input: "((lambda (x y z) (+ x y z)) 1 2 3)", output: ["6"]},
+            { 
+                input: `; syntactic sugar for definining functions
+(define (fibb n)
+  (if (< n 3)
+  n
+  (+ (fibb (- n 2)) (fibb (- n 1)))))
+(fibb 6)`,
+                output: ["13"],
+            },
+            {
+                input: `; primitive functions can be overwritten
+(define (=) "foo")
+(=)`,
+                output: ['"foo"'],
+            },
         ],
         errors: [
             "(lambda (x y 10) (+ x y 10))",

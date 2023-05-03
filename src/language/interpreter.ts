@@ -3,7 +3,6 @@ const mathPrimitives = ["+", "-", "*", "/", "=", "<", ">", "<=", ">="] as const;
 type MathPrimitive = typeof mathPrimitives[number];
 
 // TODO: difference between () and '() in Racket
-
 export function interp(sp: SExpr[]): { value: Value[], env: Values } {
     const varTable: Values = {};
     // evaluate root SP
@@ -65,6 +64,12 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
                 return typeof evaluateSE(elems[0], localVars) === (f === "function?"
                     ? "object"
                     : f.slice(0, -1));
+            }
+            if (f === "true?") {
+                return evaluateSE(elems[0], localVars) === true;
+            }
+            if (f === "false?") {
+                return evaluateSE(elems[0], localVars) === false;
             }
             if (f === "empty?") {
                 return Array.isArray(evaluateSE(elems[0], localVars)); 
