@@ -11,9 +11,13 @@ type Str = { s: string };
 type Values = Record<string, Value>;
 
 type Fun = {
+    type: "function",
     args: string[],
     body: SExpr,
     env: Values,
+} | {
+    type: "primitive-function",
+    identifier: string,
 };
 
 type Value = number | boolean | Fun | string | [];

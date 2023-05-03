@@ -57,9 +57,6 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
             ? fS
             // this means I can use "strings" as function names! Is this a good idea??
             : evaluateSE(fS, localVars);
-        if (mathPrimitives.includes(f as MathPrimitive)) {
-            return evalMathPrimitive(f as MathPrimitive, elems, localVars);
-        }
         if (typeof f === "string" && f.endsWith("?")) {
             if (elems.length === 0) {
                 throw new Error(`${f} requires 1 or more arguments`);
@@ -104,6 +101,7 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
             }
             const body = elems[1];
             const fun: Fun = {
+                type: "function",
                 args,
                 body,
                 env: localVars,
@@ -123,6 +121,12 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
         const fv = typeof f === "object" ? f : localVars[f];
         if (typeof fv !== "object") {
             if (typeof f === "string") {
+                if (mathPrimitives.includes(f as MathPrimitive)) {
+                    return applyFunction({
+                        type: "primitive-function",
+                        identifier: f,
+                    }, elems, localVars);
+                }
                 const macro = macros[f];
                 if (macro) {
                     return evaluateSE(macro(sl), localVars);
@@ -137,7 +141,10 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
     }
 
     function applyFunction(l: Fun, v: SExpr[], localVars: Values): Value {
-         const newVars: Values = {
+        if (l.type === "primitive-function") {
+            return evalMathPrimitive(l.identifier as MathPrimitive, v, localVars);
+        }
+        const newVars: Values = {
             ...structuredClone(localVars),
             ...l.args.reduce((vars, param, i) => {
                 return {
@@ -157,8 +164,11 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
         if (typeof a === "object") {
             return a.s;
         }
-        const val = localVars[a];
-        if (localVars[a] === undefined) {
+        const val = localVars[a] ?? (mathPrimitives.includes(a as MathPrimitive) ? {
+            type: "primitive-function",
+            identifier: a,
+        } : undefined);
+        if (val === undefined) {
             throw new Error(`undefined variable ${a}`);
         }
         return val;

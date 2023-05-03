@@ -282,7 +282,7 @@ bar"`,
             },
             {
                 input: `(define myL (list 2 3 10))
-(fold (lambda (x y) (+ x y)) 0 myL)
+(fold + 0 myL)
 (first (map (lambda (x) (* x 2)) myL))`,
                 output: ["15","4"],
             },
