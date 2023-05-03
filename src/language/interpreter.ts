@@ -43,7 +43,7 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
         if (Array.isArray(se)) {
             return evaluateSL(se, localVars)
         } else {
-            return evaluateA(se, localVars);
+            return evaluateAtom(se, localVars);
         }
     }
     
@@ -123,6 +123,7 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
         if (typeof f === "boolean") {
             throw new Error("boolean is not a function");
         }
+        // TODO: clearer logic here
         const fv = typeof f === "object" ? f : localVars[f];
         if (typeof fv !== "object") {
             if (typeof f === "string") {
@@ -162,7 +163,7 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
         return evaluateSE(l.body, newVars);
     }
     
-    function evaluateA(a: Atom, localVars: Values): Value {
+    function evaluateAtom(a: Atom, localVars: Values): Value {
         if (typeof a === "number" || typeof a === "boolean") {
             return a;
         }
