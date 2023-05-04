@@ -130,7 +130,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
           placeholder="Enter code for evaluation..."
           style={{ fontFamily: "monospace" }}
           className={`my-textarea form-control ${error ? "is-invalid" : result.length > 0 ? "is-valid" : ""}`}
-          rows={5}
+          rows={8}
           value={text}
           onChange={handleTextChange}
         />
