@@ -1,6 +1,8 @@
 import { useTokens } from "../lib/useTokens";
 import { tokenizer } from "./tokenizer";
 
+const closers = [")", "]", "}"];
+
 // SP -> SE | SE SP
 // SE -> A | SL
 // SL -> ( SP )
@@ -8,30 +10,35 @@ import { tokenizer } from "./tokenizer";
 
 export function parse(tokens: Readonly<(string|number)[]>): SExpr[] {
     const t = useTokens(tokens);
-    const sp = parseElements();
+    const sp = parseExpressions();
     if (!t.isEmpty()) {
         throw new Error("trailing tokens");
     }
     return sp;
-    function parseElements(): SExpr[] {
+    function parseExpressions(): SExpr[] {
         const first = parseSE();
-        if (t.lookahead() === undefined || t.lookahead() === ")" || t.lookahead() === "]") {
+        if (t.lookahead() === undefined || closers.includes(t.lookahead() as string)) {
             return [first];
         }
-        return [first, ...parseElements()];
+        return [first, ...parseExpressions()];
     }
     function parseSE(): SExpr {
         const l = t.lookahead();
-        if (l !== "(" && l !== "[") {
+        if (l !== "(" && l !== "[" && l !== "{") {
             return parseA();
         } else {
             t.consume();
+            if (l === "{") {
+                const exps = parseExpressions();
+                t.match("}");
+                return ["begin", ...exps];
+            }
             const closer = l === "(" ? ")" : "]";
             if (t.lookahead() === closer) {
                 t.consume();
                 return [];
             }
-            const s = parseElements();
+            const s = parseExpressions();
             t.match(closer);
             return s;
         }

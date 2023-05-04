@@ -354,6 +354,32 @@ bar"`,
                 input: `(+ 2 3) [+ 2 3]`,
                 output: ["5", "5"],
             },
+            {
+                input: `; begin evaluates all expressions and returns the value of last one
+(begin
+    (define x 10)
+    (define y (+ x 2))
+    (+ y 3)
+    (+ y 2)
+)`,
+                output: ["14"],
+            },
+            {
+                input: `(begin 1 2 3)`,
+                output: ["3"],
+            },
+            {
+                input: `; curly brackets { ... } are sugar for (begin ... )
+{1 2 3}`,
+                output: ["3"],
+            },
+            {
+                input: `(+ {
+  (define x 10)
+  (+ x 3)
+} 2)`,
+                output: ["15"],
+            },
         ],
         errors: [
             "(() 3)",
@@ -364,6 +390,8 @@ bar"`,
             "(",
             "[",
             "(+ 3 4]",
+            "begin",
+            "(begin)",
         ],
     },
     {
@@ -379,6 +407,18 @@ bar"`,
                 output: ["15"],
             },
             {
+                input: `(define l (list 1 2 3 4 5 6 7))
+(first l) (second l) (third l)
+(fourth l) (fifth l)
+(nth l 6) (nth l 7)              
+`,
+                output: ["1", "2", "3", "4", "5", "6", "7"],
+            },
+            {
+                input: `(empty? (list))`,
+                output: ["true"],
+            },
+            {
                 input: `(define myL (list 2 3 10))
 (fold + 0 myL)
 (first (map (lambda (x) (* x 2)) myL))`,
@@ -389,12 +429,20 @@ bar"`,
 (some (lambda (x) (> x 10)) myL)
 (some (lambda (x) (> x 100)) myL)
 (every (lambda (x) (> x 10)) myL)
-(every (lambda (x) (> x 3)) myL)`,
+(every (lambda (x) (> x 3)) myL)
+(length myL)
+(define gtTen (filter (lambda (x) (> x 10)) myL))
+(length gtTen) (first gtTen) (second gtTen)
+`,
                 output: [
                     "true",
                     "false",
                     "false",
                     "true",
+                    "4",
+                    "2",
+                    "20",
+                    "100",
                 ],
             },
         ],

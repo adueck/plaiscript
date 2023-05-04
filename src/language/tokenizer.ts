@@ -1,7 +1,7 @@
 import { stdLib } from "./std-lib";
 
 const diSymbols = ["<=", ">="];
-const symbols = ["(", ")", "+", "-", "*", "/", "=", "<", ">", ",", "[", "]"];
+const symbols = ["(", ")", "+", "-", "*", "/", "=", "<", ">", ",", "[", "]", "{", "}"];
 const whitespace = [" ", "\t", "\n"];
 
 export function tokenizer(l: string): (number | string)[] {

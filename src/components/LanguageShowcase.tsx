@@ -84,7 +84,16 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
   (if (< n 3)
   n
   (+ (fibb (- n 2)) (fibb (- n 1)))))
-(fibb 7)`}
+(fibb 7)
+
+; output: 21
+
+(+ {
+  (define x 10)
+  (+ x 3)
+} 2)
+
+; output: 15`}
         </code>
       </pre>
       <div>

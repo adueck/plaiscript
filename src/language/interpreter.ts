@@ -3,20 +3,21 @@ const mathPrimitives = ["+", "-", "*", "/", "=", "<", ">", "<=", ">="] as const;
 type MathPrimitive = typeof mathPrimitives[number];
 
 // TODO: begin { block }, apply
-export function interp(sp: SExpr[]): { value: Value[], env: Values } {
+export function interp(sp: SExpr[]): Value[] {
     const varTable: Values = {};
     // evaluate root SP
-    return {
-        value: sp.reduce((arr, s) => {
+    return processExpressions(sp, varTable);
+
+    function processExpressions(sp: SExpr[], localVars: Values): Value[] {
+        return sp.reduce((arr, s) => {
             // check for top-level defines here
             if (Array.isArray(s) && s[0] === "define") {
                 Object.assign(varTable, handleDefine(s, varTable));
                 return arr;
             }
             return [...arr, evaluateSE(s, varTable)];
-        }, [] as Value[]),
-        env: varTable,
-    };
+        }, [] as Value[]);
+    }
 
     function handleDefine(s: SExpr, localVars: Values): Values {
         if (!Array.isArray(s) || s[0] !== "define") {
@@ -56,6 +57,12 @@ export function interp(sp: SExpr[]): { value: Value[], env: Values } {
             ? fS
             // this means I can use "strings" as function names! Is this a good idea??
             : evaluateSE(fS, localVars);
+        if (f === "begin") {
+            if (elems.length === 0) {
+                throw new Error("begin requires at least one expression");
+            }
+            return processExpressions(elems, localVars).slice(-1)[0];
+        }
         if (typeof f === "string" && f.endsWith("?")) {
             if (elems.length === 0) {
                 throw new Error(`${f} requires 1 or more arguments`);
