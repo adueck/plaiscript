@@ -52,105 +52,95 @@ export function interp(sp: SExpr[]): Value[] {
         if (sl.length === 0) {
             return [];
         }
-        const [fS, ...elems] = sl;
-        const f = typeof fS === "string"
-            ? fS
-            // this means I can use "strings" as function names! Is this a good idea??
-            : evaluateSE(fS, localVars);
-        if (f === "begin") {
-            if (elems.length === 0) {
-                throw new Error("begin requires at least one expression");
-            }
-            return processExpressions(elems, localVars).slice(-1)[0];
-        }
-        if (typeof f === "string" && f.endsWith("?")) {
-            if (elems.length === 0) {
-                throw new Error(`${f} requires 1 or more arguments`);
-            }
-            if (["boolean?", "string?", "number?", "function?"].includes(f)) {
-                return typeof evaluateSE(elems[0], localVars) === (f === "function?"
-                    ? "object"
-                    : f.slice(0, -1));
-            }
-            if (f === "true?") {
-                return evaluateSE(elems[0], localVars) === true;
-            }
-            if (f === "false?") {
-                return evaluateSE(elems[0], localVars) === false;
-            }
-            if (f === "empty?") {
-                return Array.isArray(evaluateSE(elems[0], localVars)); 
-            }
-        }
-
-        if (f === "local") {
-            const defines = elems[0];
-            const body = elems[1];
-            if (!Array.isArray(defines)) {
-                throw new Error("defines section of local statement must be list of defiine statemens");
-            }
-            if (body === undefined) {
-                throw new Error("body of local statement missing");
-            }
-            const newVars = defines.reduce((vars, x) => ({
-                ...vars,
-                ...handleDefine(x, vars),
-            }), localVars);
-            return evaluateSE(body, newVars);
-        }
-        if (f === "if") {
-            if (elems.length !== 3) {
-                throw new Error("if statement requires three arguments");
-            }
-            return evaluateSE(elems[0], localVars) === false
-                ? evaluateSE(elems[2], localVars)
-                : evaluateSE(elems[1], localVars);
-        }
-        if (f === "lambda") {
-            const args = elems[0];
-            if (!Array.isArray(args) || !args.every<string>((x): x is string => typeof x === "string")) {
-                throw new Error("args for lambda must be s-expr of strings");
-            }
-            const body = elems[1];
-            const fun: Fun = {
-                type: "function",
-                args,
-                body,
-                env: localVars,
-            };
-            return fun;
-        }
-        if (f === "define") {
-            throw new Error("found a definition that is not at the top level");
-        }
-        if (f === "error") {
-            const msg = evaluateSE(elems[0], localVars);
-            throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
-        }
-        if (typeof f === "boolean") {
-            throw new Error("boolean is not a function");
-        }
-        // TODO: clearer logic here
-        const fv = typeof f === "object" ? f : localVars[f];
-        if (typeof fv !== "object") {
-            if (typeof f === "string") {
-                if (mathPrimitives.includes(f as MathPrimitive)) {
-                    return applyFunction({
-                        type: "primitive-function",
-                        identifier: f,
-                    }, elems, localVars);
+        const [f, ...elems] = sl;
+        if (typeof f === "string") {
+            if (f === "begin") {
+                if (elems.length === 0) {
+                    throw new Error("begin requires at least one expression");
                 }
-                const macro = macros[f];
-                if (macro) {
-                    return evaluateSE(macro(sl), localVars);
+                return processExpressions(elems, localVars).slice(-1)[0];
+            }
+            if (f.endsWith("?")) {
+                if (elems.length === 0) {
+                    throw new Error(`${f} requires 1 or more arguments`);
+                }
+                if (["boolean?", "string?", "number?", "function?"].includes(f)) {
+                    return typeof evaluateSE(elems[0], localVars) === (f === "function?"
+                        ? "object"
+                        : f.slice(0, -1));
+                }
+                if (f === "true?") {
+                    return evaluateSE(elems[0], localVars) === true;
+                }
+                if (f === "false?") {
+                    return evaluateSE(elems[0], localVars) === false;
+                }
+                if (f === "empty?") {
+                    return Array.isArray(evaluateSE(elems[0], localVars)); 
                 }
             }
-            throw new Error(`function '${f}' not defined`);
+            if (f === "local") {
+                const defines = elems[0];
+                const body = elems[1];
+                if (!Array.isArray(defines)) {
+                    throw new Error("defines section of local statement must be list of defiine statemens");
+                }
+                if (body === undefined) {
+                    throw new Error("body of local statement missing");
+                }
+                const newVars = defines.reduce((vars, x) => ({
+                    ...vars,
+                    ...handleDefine(x, vars),
+                }), localVars);
+                return evaluateSE(body, newVars);
+            }
+            if (f === "if") {
+                if (elems.length !== 3) {
+                    throw new Error("if statement requires three arguments");
+                }
+                return evaluateSE(elems[0], localVars) === false
+                    ? evaluateSE(elems[2], localVars)
+                    : evaluateSE(elems[1], localVars);
+            }
+            if (f === "lambda") {
+                const args = elems[0];
+                if (!Array.isArray(args) || !args.every<string>((x): x is string => typeof x === "string")) {
+                    throw new Error("args for lambda must be s-expr of strings");
+                }
+                const body = elems[1];
+                const fun: Fun = {
+                    type: "function",
+                    args,
+                    body,
+                    env: localVars,
+                };
+                return fun;
+            }
+            if (f === "define") {
+                throw new Error("found a definition that is not at the top level");
+            }
+            if (f === "error") {
+                const msg = evaluateSE(elems[0], localVars);
+                throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
+            }
+            if (mathPrimitives.includes(f as MathPrimitive)) {
+                return applyFunction({
+                    type: "primitive-function",
+                    identifier: f,
+                }, elems, localVars);
+            }
+            const macro = macros[f];
+            if (macro) {
+                return evaluateSE(macro(sl), localVars);
+            }
         }
-        if (Array.isArray(fv)) {
-            throw new Error("'() is not a function");
+        const fv = typeof f === "string"
+            ? localVars[f]
+            : evaluateSE(f, localVars);
+        if (isFunction(fv)) {
+            return applyFunction(fv, elems, localVars);
         }
-        return applyFunction(fv, elems, localVars);
+        throw new Error("unknown/invalid function");
     }
 
     function applyFunction(l: Fun, v: SExpr[], localVars: Values): Value {
@@ -259,4 +249,8 @@ export function interp(sp: SExpr[]): Value[] {
             return n;
         }
     } 
+}
+
+function isFunction(v: Value): v is Fun {
+    return typeof v === "object" && !Array.isArray(v);
 }

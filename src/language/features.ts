@@ -237,6 +237,16 @@ bar"`,
             { input: "(let (f (lambda (x y) (+ x y))) (f 2 3))", output: ["5"]},
             { input: `(let (f (lambda () "foo")) (f))`, output: ['"foo"']},
             { input: `(let (f (lambda () "foo")) f)`, output: ["#function"]},
+            { 
+                input: `(define (fx v) (lambda () v))
+((fx 10))`,
+                output: ["10"],
+            },
+            { 
+                input: `(define (fx v) (lambda (y) (+ v y)))
+((fx 10) 2)`,
+                output: ["12"],
+            },
             { input: "+", output: ["#function"] },
             { input: ">=", output: ["#function"] },
             { input: "((lambda (x y z) (+ x y z)) 1 2 3)", output: ["6"]},
@@ -250,10 +260,10 @@ bar"`,
                 output: ["13"],
             },
             {
-                input: `; primitive functions can be overwritten
+                input: `; primitive functions can not be overwritten
 (define (=) "foo")
-(=)`,
-                output: ['"foo"'],
+(= 2 2)`,
+                output: ["true"],
             },
         ],
         errors: [
