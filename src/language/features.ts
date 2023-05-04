@@ -384,6 +384,19 @@ bar"`,
 (first (map (lambda (x) (* x 2)) myL))`,
                 output: ["15","4"],
             },
+            {
+                input: `(define myL (list 5 10 20 100))
+(some (lambda (x) (> x 10)) myL)
+(some (lambda (x) (> x 100)) myL)
+(every (lambda (x) (> x 10)) myL)
+(every (lambda (x) (> x 3)) myL)`,
+                output: [
+                    "true",
+                    "false",
+                    "false",
+                    "true",
+                ],
+            },
         ],
         errors: [],
     },

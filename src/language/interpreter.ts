@@ -2,7 +2,7 @@ import { funMacro, macros } from "./macros";
 const mathPrimitives = ["+", "-", "*", "/", "=", "<", ">", "<=", ">="] as const;
 type MathPrimitive = typeof mathPrimitives[number];
 
-// TODO: difference between () and '() in Racket
+// TODO: begin { block }, apply
 export function interp(sp: SExpr[]): { value: Value[], env: Values } {
     const varTable: Values = {};
     // evaluate root SP

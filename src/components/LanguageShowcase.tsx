@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { printValue } from '../lib/print-value';
 import { features } from '../language/features';
 import Toast from "react-bootstrap/Toast";
+const textStorageKey = "editor-text";
 
 type FeatureName = typeof features[number]["label"];
+
+
+
 
 function LanguageShowCase({ tokenizer, parser, evaluator }: {
     tokenizer: (l: string) => (string | number)[],
@@ -17,6 +21,12 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
   const [result, setResult] = useState<Value[]>([]);
   const [tree, setTree] = useState<SExpr[]>([]);
   const [featureSelected, setFeatureSelected] = useState<undefined | typeof features[number]["label"]>(undefined);
+  useEffect(() => {
+    const saved = localStorage.getItem(textStorageKey) as string | null;
+    if (saved) {
+      setText(saved);
+    }
+  })
   // useEffect(() => {
   //   // @ts-ignore
   //   $(".my-textarea").highlightWithinTextarea({ highlight: "foo" });
@@ -50,6 +60,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
   }
   function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const t = e.target.value;
+    localStorage.setItem(textStorageKey, t);
     setError("");
     setResult([]);
     setTree([]);
