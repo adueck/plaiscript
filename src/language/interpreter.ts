@@ -2,7 +2,6 @@ import { funMacro, macros } from "./macros";
 const mathPrimitives = ["+", "-", "*", "/", "=", "<", ">", "<=", ">="] as const;
 type MathPrimitive = typeof mathPrimitives[number];
 
-// TODO: begin { block }, apply
 export function interp(sp: SExpr[]): Value[] {
     const varTable: Values = {};
     // evaluate root SP
