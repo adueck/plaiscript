@@ -1,6 +1,6 @@
 // Types (for type checker)
 
-type Type = "boolean" | "string" | "number" | "function" | "error" | FunctionType | Union;
+type Type = "boolean" | "string" | "number" | "function" | "error" | FunctionType | Union | "never";
 
 type Union = Type[];
 

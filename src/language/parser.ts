@@ -1,5 +1,6 @@
 import { useTokens } from "../lib/useTokens";
 import { tokenizer } from "./tokenizer";
+import { makeUnion } from "./type-checker";
 
 const closers = [")", "]", "}"];
 
@@ -10,31 +11,32 @@ const closers = [")", "]", "}"];
 
 export function parse(tokens: Readonly<(string|number)[]>): SExpr[] {
     const t = useTokens(tokens);
-    const sp = parseExpressions();
+    const sp = parseExpressionsTopL();
     if (!t.isEmpty()) {
         throw new Error("trailing tokens");
     }
     return sp;
-    function parseExpressions(): SExpr[] {
-        const first = parseSE();
-        if (t.lookahead() === undefined || closers.includes(t.lookahead() as string)) {
-            return [first];
+    function parseExpressionsTopL(): SExpr[] {
+        const exprs: SExpr[] = [];
+        while (t.lookahead() !== undefined && !closers.includes(t.lookahead() as string)) {
+            exprs.push(parseSE());
         }
-        return [first, ...parseExpressions()];
+        return exprs;
+    }
+    function parseExpressions(): SExpr[] | TypedVar {
+        const exprs = parseExpressionsTopL();
+        return exprs.some(x => x === ":")
+            ? convertToTypedVar(exprs)
+            : exprs;
     }
     function parseSE(): SExpr {
         const l = t.lookahead();
         if (l !== "(" && l !== "[" && l !== "{") {
             return parseA();
         } else {
-            if (l === "[") {
-                if (typedVarAhead()) {
-                    return parseTypedVar();
-                }
-            }
             t.consume();
             if (l === "{") {
-                const exps = parseExpressions();
+                const exps = parseExpressionsTopL();
                 t.match("}");
                 return ["begin", ...exps];
             }
@@ -61,35 +63,39 @@ export function parse(tokens: Readonly<(string|number)[]>): SExpr[] {
             ? (a === "t" || a === "true" || a === "#t" || a === "#true")
             : a;
     }
-    function typedVarAhead(): boolean {
-        return t.lookahead() === "["
-            && isIdent(t.lookahead(1))
-            && t.lookahead(2) === ":"
-            && isIdent(t.lookahead(3))
-            && t.lookahead(4) === "]";
-        function isIdent(s: string | number | undefined) {
-            if (typeof s !== "string") {
-                return false;
-            }
-            return !["#t", "#f", "true", "false", "#true", "#false"].includes(s);
+    function convertToTypedVar(se: SExpr): TypedVar {
+        if (!Array.isArray(se)) {
+            throw new Error("typed var parsing error");
         }
-    }
-    function parseTypedVar(): TypedVar {
-        t.match("[");
-        const varName = parseA();
-        if (typeof varName !== "string") {
-            throw new Error("failed parsing TypedVar");
+        const [name, colon, typeV] = se;
+        if (typeof name !== "string") {
+            throw new Error("identifier expected for typed variable name");
         }
-        t.match(":");
-        const varType = parseA();
-        t.match("]");
-        if (typeof varName !== "string") {
-            throw new Error("failed parsing TypedVar");
+        if (colon !== ":") {
+            throw new Error(": expected in typed variable");
         }
+        if (typeof typeV !== "string" && !Array.isArray(typeV)) {
+            throw new Error("invalid type syntax in typed var");
+        }
+        const type = makeType(typeV);
         return {
-            name: varName,
-            // TODO: safer check here!
-            type: varType as Type,
+            name,
+            type,
+        };
+    }
+    function makeType(s: SExpr): Type {
+        if (typeof s !== "string" && !Array.isArray(s)) {
+            throw new Error("invalid type syntax");
         }
+        if (typeof s === "string") {
+            return s as Type;
+        }
+        const [uMark, ...types] = s;
+        if (uMark !== "U" && uMark !== "union") {
+            throw new Error("union type expected");
+        }
+        return types.reduce<Type>((type, x) => {
+            return makeUnion(makeType(x), type);
+        }, "never");
     }
 }

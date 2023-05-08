@@ -1,4 +1,3 @@
-import { type } from "jquery";
 import { funMacro, macros } from "./macros";
 import {
     isEqual
@@ -7,6 +6,8 @@ import {
 const mathOps = ["+", "-", "*", "/"];
 const compOpts = ["=", "<", ">", "<=", ">="];
 const preds = ["boolean?", "string?", "number?", "function?", "true?", "false?", "empty?"];
+
+// TODO: special type checking process for cond - don't use macro
 
 export function tc(se: SExpr, env: TypeEnv): Type {
     if (typeof se === "number") {
@@ -18,14 +19,14 @@ export function tc(se: SExpr, env: TypeEnv): Type {
     if (Array.isArray(se)) {
         const [f, ...args] = se;
         if (mathOps.includes(f as string)) {
-            if (args.every(a => typeOk(tc(a, env), "number"))) {
+            if (args.every(a => typeSubsetOf(tc(a, env), "number"))) {
                 return "number";
             } else {
                 throw new Error("math operators require number for all arguments");
             }
         }
         if (compOpts.includes(f as string)) {
-            if (args.every(a => typeOk(tc(a, env), "number"))) {
+            if (args.every(a => typeSubsetOf(tc(a, env), "number"))) {
                 return "boolean";
             } else {
                 throw new Error("comparison operators require number for all arguments");
@@ -57,12 +58,19 @@ export function tc(se: SExpr, env: TypeEnv): Type {
                 throw new Error("if requires 3 arguments");
             }
             const [c, t, e] = args;
-            const tType = tc(t, env);
-            const eType = tc(e, env);
-            if (!isEqual(tType, eType)) {
-                return makeUnion(tType, eType);
+            return makeUnion(tc(e, env), tc(t, env));
+        }
+        if (f === "cond") {
+            if (args.some(arm => !Array.isArray(arm) || arm.length !== 2)) {
+                throw new Error("invalid cond expression");
             }
-            return tType;
+            return args.reduce<Type>((type, arm) => {
+                if (!Array.isArray(arm)) throw new Error("impossible");
+                if (tc(arm[0], env) !== "boolean") {
+                    throw new Error("conditional arm must start with boolean");
+                }
+                return makeUnion(tc(arm[1], env), type);
+            }, "never");
         }
         if (f === "lambda") {
             if (args.length !== 2) {
@@ -122,7 +130,7 @@ export function tc(se: SExpr, env: TypeEnv): Type {
         if (ft.args.length !== args.length) {
             throw new Error(`incorrect number of arguments for function ${fName ? fName : ""}`);
         }
-        if (!ft.args.every((a, i) => typeOk(tc(args[i], env), a))) {
+        if (!ft.args.every((a, i) => typeSubsetOf(tc(args[i], env), a))) {
             throw new Error(`invalid arguments givin to function ${fName ? fName : ""}`);
         }
         return ft.returns;
@@ -147,12 +155,16 @@ export function tc(se: SExpr, env: TypeEnv): Type {
         if (typeof name !== "string") {
             throw new Error("variable name for define statement must be a string or [varName : type]");
         }
-        if (typeof varName === "object" && "name" in varName && !typeOk(v, varName.type)) {
+        if (typeof varName === "object" && "name" in varName && !typeSubsetOf(v, varName.type)) {
             throw new Error("improper type assignment");
         }
+        // if type is assigned to variable manually, use the manually assigned type (after checking above)
+        const typeV = typeof varName === "object" && "name" in varName
+            ? varName.type
+            : v;
         return {
             ...structuredClone(env),
-            [name]: v,
+            [name]: typeV,
         };
     }
 }
@@ -164,22 +176,25 @@ export function tc(se: SExpr, env: TypeEnv): Type {
  * @param b 
  * @returns 
  */
-function typeOk(a: Type, b: Type): boolean {
+export function typeSubsetOf(a: Type, b: Type): boolean {
     if (Array.isArray(a)) {
-        return a.every(x => typeOk(x, b));
+        return a.every(x => typeSubsetOf(x, b));
     }
     if (Array.isArray(b)) {
-        return b.some(x => typeOk(a, x));
+        return b.some(x => typeSubsetOf(a, x));
     }
     return isEqual(a, b);
 }
 
 export function makeUnion(a: Type, b: Type): Type {
-    if (typeOk(a, b)) {
+    if (b === "never") {
+        return a;
+    }
+    if (typeSubsetOf(a, b)) {
         return b;
     }
     return [
         a,
-        Array.isArray(b) ? b.filter(x => !typeOk(x, a)) : b,
+        Array.isArray(b) ? b.filter(x => !typeSubsetOf(x, a)) : b,
     ].flat(10);
 }

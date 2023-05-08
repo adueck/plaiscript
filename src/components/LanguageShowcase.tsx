@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { printValue } from '../lib/print-value';
 import { features } from '../language/features';
 import Toast from "react-bootstrap/Toast";
+import { tokenizer as plainTokenizer } from '../language/tokenizer';
+import { tc } from '../language/type-checker';
+import { useStickyState } from 'use-sticky-reducer';
+
 const textStorageKey = "editor-text";
 
+
 type FeatureName = typeof features[number]["label"];
-
-
-
 
 function LanguageShowCase({ tokenizer, parser, evaluator }: {
     tokenizer: (l: string) => (string | number)[],
@@ -19,6 +21,8 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
   const [text, setText] = useState("");
   const [error, setError] = useState<string>("");
   const [result, setResult] = useState<Value[]>([]);
+  const [checkTypes, setCheckTypes] = useStickyState<boolean>(false, "check-types");
+  const [tcError, setTcError] = useState<string>("");
   const [tree, setTree] = useState<SExpr[]>([]);
   const [featureSelected, setFeatureSelected] = useState<undefined | typeof features[number]["label"]>(undefined);
   useEffect(() => {
@@ -42,7 +46,21 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
       setTree([]);
       setError("");
       setResult([]);
+      setTcError("");
       return;
+    }
+    if (checkTypes) {
+      try {
+        const e = parser(plainTokenizer(text, false));
+        e.forEach((ex) => {
+          tc(ex, {});
+        });
+        setTcError("");
+      } catch(e) {
+        // @ts-ignore
+        const msg = e.message as string;
+        setTcError(`type error: ${msg}`);
+      }
     }
     try {
       const e = parser(tokenizer(text));
@@ -96,7 +114,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
 ; output: 15`}
         </code>
       </pre>
-      <div>
+      <div className="mb-3">
         <h5>Features / Examples</h5>
         <ul className="nav">
           {features.map((feature) => (
@@ -109,6 +127,18 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
             </li>
           ))}
         </ul>
+      </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          type="checkbox"
+          checked={checkTypes}
+          onChange={() => setCheckTypes(o => !o)}
+          id="check-types"
+        />
+        <label className="form-check-label" htmlFor="check-types">
+          use type checker (in progress 🚧)
+        </label>
       </div>
       <Toast className="mb-3 mt-2" style={{ width: "100%" }} show={!!featureSelected} onClose={() => setFeatureSelected(undefined)}>
         <Toast.Header>
@@ -129,7 +159,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
         <textarea
           placeholder="Enter code for evaluation..."
           style={{ fontFamily: "monospace" }}
-          className={`my-textarea form-control ${error ? "is-invalid" : result.length > 0 ? "is-valid" : ""}`}
+          className={`my-textarea form-control ${(error || (checkTypes && tcError)) ? "is-invalid" : result.length > 0 ? "is-valid" : ""}`}
           rows={8}
           value={text}
           onChange={handleTextChange}
@@ -143,6 +173,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
           <button className="btn btn-secondary" onClick={handleClear}>clear</button>
         </div>
       </div>
+      {tcError && checkTypes && <div className="text-muted small mt-2"><samp>{tcError}</samp></div>}
       {error && <div className="text-muted small mt-2"><samp>{error}</samp></div>}
       {result.length > 0 && <div>
         <div className="py-1">Result:</div>

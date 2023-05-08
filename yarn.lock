@@ -2662,6 +2662,11 @@ update-browserslist-db@^1.0.10:
     escalade "^3.1.1"
     picocolors "^1.0.0"
 
+use-sticky-reducer@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/use-sticky-reducer/-/use-sticky-reducer-1.0.0.tgz#e3a29c5ffd396b77a4ed8a3cfb3a6469cf6dc899"
+  integrity sha512-hsvlAUff9JBN/83gPvxtJiMUnx4Bo0KHSHAeZhsrMN5jVz4v7xVqVDmq711WBkQxHjIG4TPx6wbFRDqmDyPYYw==
+
 v8-compile-cache-lib@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/v8-compile-cache-lib/-/v8-compile-cache-lib-3.0.1.tgz#6336e8d71965cb3d35a1bbb7868445a7c05264bf"

@@ -1,6 +1,6 @@
 import { parse } from "./parser";
 import { tokenizer } from "./tokenizer";
-import { makeUnion, tc } from "./type-checker";
+import { makeUnion, tc, typeSubsetOf } from "./type-checker";
 
 test("makeUnion", () => {
     expect(makeUnion("string", "number"))
@@ -149,14 +149,23 @@ x)`,
         input: `(if #t "foo" 10)`,
         type: ["string", "number"],
     },
-//     {
-//         input: `(cond
-//     [(= 3 2) 1]
-//     [(> 3 4) 2]
-//     [#t 3]
-// )`,
-//         type: "number",
-//     },
+    {
+        input: `(cond
+    [(= 3 2) 1]
+    [(> 3 4) 2]
+    [#t 3]
+)`,
+        type: "number",
+    },
+    {
+        input: `(cond
+    [#f 1]
+    [#t 2]
+    [#t 3]
+    [(> 3 2) "foo"]
+)`,
+        type: ["number", "string"],
+    },
     {
         input: `(not 10)`,
         type: "boolean",
@@ -209,7 +218,54 @@ x)`,
         input: `((lambda ([x: number] [y: number] [z: number]) (+ x y z)) 1 2)`,
         type: "error",
     },
+    {
+        input: `(not 7)`,
+        type: "boolean",
+    },
+    {
+        input: `(or)`,
+        type: "boolean",
+    },
+    {
+        input: `(or 2)`,
+        type: ["number", "boolean"],
+    },
+    {
+        input: `(or 2 "foo" 10 "baz")`,
+        type: ["number", "boolean", "string"],
+    },
+    {
+        input: `(and 3 4)`,
+        type: ["number", "boolean"],
+    },
+    {
+        input: `(and "foo" 10)`,
+        type: ["boolean", "number"],
+    },
+    // {
+    //     input: `(and "foo" 20 10)`,
+    //     type: ["number", "boolean"],
+    // },
     // TODO: proper checking of math and comparison types with arbitrary number of args
+    {
+        input: `(local
+    ((define [x: (U number string)] 3))
+x)`,
+        type: ["number", "string"],
+    },
+    {
+        input: `(local
+    ((define [x: (U number (U string function))] 3))
+x)`,
+        type: ["number", "string", "function"],
+    },
+    {
+        input: `(local
+    ((define (myAdd [x: number] [y: (U number string)]) (+ x y)))
+(myAdd 2 3))`,
+        type: "error",
+    },
+    // TODO: let expressions
 ];
 
 test("tc test", () => {
@@ -220,7 +276,12 @@ test("tc test", () => {
                 tc(parsed, {});
             }).toThrow();
         } else {
-            expect(tc(parsed, {})).toEqual(type);
+            const resultType = tc(parsed, {});
+            expect(typeEquivalent(resultType, type)).toBe(true);
         }
     });
 });
+
+function typeEquivalent(a: Type, b: Type): boolean {
+    return typeSubsetOf(a, b) && typeSubsetOf(b, a);
+}
