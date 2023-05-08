@@ -3,7 +3,7 @@
  * for matching and consuming them
  */
 export function useTokens(tokens: Readonly<(string|number)[]>): {
-    lookahead: () => string | number | undefined,
+    lookahead: (i?: number) => string | number | undefined,
     match: (t: string | number) => void,
     consume: () => void,
     isEmpty: () => boolean,
@@ -19,7 +19,10 @@ export function useTokens(tokens: Readonly<(string|number)[]>): {
     function consume() {
         ll = tt.shift();
     }
-    function lookahead() {
+    function lookahead(i?: number) {
+        if (i) {
+            return tt[i - 1];
+        }
         return ll;
     }
     function isEmpty() {

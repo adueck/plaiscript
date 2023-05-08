@@ -19,6 +19,9 @@ export function interp(sp: SExpr[]): Value[] {
     }
     
     function evalSExpr(se: SExpr, localVars: Values): Value {
+        if (typeof se === "object" && "name" in se) {
+            throw new Error("misplaced typed variable");
+        }
         if (Array.isArray(se)) {
             return evalEExprL(se, localVars)
         } else {
@@ -133,12 +136,15 @@ export function interp(sp: SExpr[]): Value[] {
         if (value === undefined) {
             throw new Error("value for variable definition required");
         }
-        if (typeof varName !== "string") {
-            throw new Error("variable name for define statement must be a string");
+        const name = typeof varName === "object" && "name" in varName
+            ? varName.name
+            : varName;
+        if (typeof name !== "string") {
+            throw new Error("variable name must be and identifier");
         }
         return {
             ...structuredClone(localVars),
-            [varName]: evalSExpr(value, localVars),
+            [name]: evalSExpr(value, localVars),
         };
     }
 

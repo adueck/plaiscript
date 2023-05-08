@@ -11,7 +11,7 @@ function App() {
     <p>A language inspired by and built while working through <a href={plai}>PLAI</a>, implemented in TypeScript.</p>
     <p className="small"><a href={repo}>Source Code</a> - Textbook: <a href={plai}>Programming Languages: Application and Interpretation</a></p>
     <LanguageShowCase
-      tokenizer={tokenizer}
+      tokenizer={(s: string) => tokenizer(s, true)}
       evaluator={(se: SExpr[]) => interp(se)}
       parser={parse}
       examples={[]}

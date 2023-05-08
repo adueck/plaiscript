@@ -1,11 +1,11 @@
 import { stdLib } from "./std-lib";
 
 const diSymbols = ["<=", ">="];
-const symbols = ["(", ")", "+", "-", "*", "/", "=", "<", ">", ",", "[", "]", "{", "}"];
+const symbols = ["(", ")", "+", "-", "*", "/", "=", "<", ">", ",", "[", "]", "{", "}", ":"];
 const whitespace = [" ", "\t", "\n"];
 
-export function tokenizer(l: string): (number | string)[] {
-    const chars = `${stdLib} ${l}`;
+export function tokenizer(l: string, includeStdLib: boolean): (number | string)[] {
+    const chars = includeStdLib ? `${stdLib} ${l}` : l;
     let tokens: (number | string)[] = [];
     let i: number = 0;
     while (i < chars.length) {

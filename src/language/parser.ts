@@ -27,6 +27,11 @@ export function parse(tokens: Readonly<(string|number)[]>): SExpr[] {
         if (l !== "(" && l !== "[" && l !== "{") {
             return parseA();
         } else {
+            if (l === "[") {
+                if (typedVarAhead()) {
+                    return parseTypedVar();
+                }
+            }
             t.consume();
             if (l === "{") {
                 const exps = parseExpressions();
@@ -55,5 +60,36 @@ export function parse(tokens: Readonly<(string|number)[]>): SExpr[] {
         return ["#t", "#f", "true", "false", "#true", "#false"].includes(a as string)
             ? (a === "t" || a === "true" || a === "#t" || a === "#true")
             : a;
+    }
+    function typedVarAhead(): boolean {
+        return t.lookahead() === "["
+            && isIdent(t.lookahead(1))
+            && t.lookahead(2) === ":"
+            && isIdent(t.lookahead(3))
+            && t.lookahead(4) === "]";
+        function isIdent(s: string | number | undefined) {
+            if (typeof s !== "string") {
+                return false;
+            }
+            return !["#t", "#f", "true", "false", "#true", "#false"].includes(s);
+        }
+    }
+    function parseTypedVar(): TypedVar {
+        t.match("[");
+        const varName = parseA();
+        if (typeof varName !== "string") {
+            throw new Error("failed parsing TypedVar");
+        }
+        t.match(":");
+        const varType = parseA();
+        t.match("]");
+        if (typeof varName !== "string") {
+            throw new Error("failed parsing TypedVar");
+        }
+        return {
+            name: varName,
+            // TODO: safer check here!
+            type: varType as Type,
+        }
     }
 }
