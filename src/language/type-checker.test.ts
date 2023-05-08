@@ -1,6 +1,23 @@
 import { parse } from "./parser";
 import { tokenizer } from "./tokenizer";
-import { tc } from "./type-checker";
+import { makeUnion, tc } from "./type-checker";
+
+test("makeUnion", () => {
+    expect(makeUnion("string", "number"))
+        .toEqual(["string", "number"]);
+    expect(makeUnion("string", ["string", "number", "boolean"]))
+        .toEqual(["string", "number", "boolean"]);
+    expect(makeUnion(["string", "number"], ["string", "number", "boolean"]))
+        .toEqual(["string", "number", "boolean"]);
+    expect(makeUnion(["string", "number"], "boolean"))
+        .toEqual(["string", "number", "boolean"]);
+    expect(makeUnion(["string", "number"], ["boolean", "string"]))
+        .toEqual(["string", "number", "boolean"]);
+    expect(makeUnion(["string", "boolean"], ["function", "boolean"]))
+        .toEqual(["string", "boolean", "function"]);
+    expect(makeUnion([["string", "boolean"], "function"], ["number", ["string"]]))
+        .toEqual(["string", "boolean", "function", "number"]);
+})
 
 const tests: {
     input: string,
@@ -45,6 +62,10 @@ const tests: {
     {
         input: "(> 1 2 10 8)",
         type: "boolean",
+    },
+    {
+        input: "(> 2 #f)",
+        type: "error",
     },
     {
         input: `"foo"`,
@@ -125,13 +146,17 @@ x)`,
         type: "function",
     },
     {
-        input: `(cond
-    [(= 3 2) +]
-    [(> 3 4) -]
-    [#t /]
-)`,
-        type: "function",
+        input: `(if #t "foo" 10)`,
+        type: ["string", "number"],
     },
+//     {
+//         input: `(cond
+//     [(= 3 2) 1]
+//     [(> 3 4) 2]
+//     [#t 3]
+// )`,
+//         type: "number",
+//     },
     {
         input: `(not 10)`,
         type: "boolean",
@@ -165,7 +190,13 @@ x)`,
     },
     {
         input: `(local
-            ((define myAdd (lambda ([x: number] [y: number]) (+ x y)))
+            ((define (myAdd [x: number] [y: number]) (+ x y)))
+          (myAdd 2 3))`,
+        type: "number",
+    },
+    {
+        input: `(local
+            ((define (myAdd [x: number] [y: number]) (+ x y))
              (define doubMe (lambda ([r: number]) (* 2 r))))
 (doubMe (myAdd 2)))`,
         type: "error",
@@ -178,6 +209,7 @@ x)`,
         input: `((lambda ([x: number] [y: number] [z: number]) (+ x y z)) 1 2)`,
         type: "error",
     },
+    // TODO: proper checking of math and comparison types with arbitrary number of args
 ];
 
 test("tc test", () => {

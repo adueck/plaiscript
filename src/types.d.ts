@@ -1,6 +1,8 @@
 // Types (for type checker)
 
-type Type = "boolean" | "string" | "number" | "function" | "error" | FunctionType;
+type Type = "boolean" | "string" | "number" | "function" | "error" | FunctionType | Union;
+
+type Union = Type[];
 
 type FunctionType = {
     args: Type[],

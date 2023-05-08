@@ -35,8 +35,8 @@ export function funMacro(sl: SExpr[]): SExpr {
         throw new Error("invalid define function syntax");
     }
     const argStrings = sl[1].slice(1);
-    if (!argStrings.every<string>((x): x is string => typeof x === "string")) {
-        throw new Error("every argument in define function syntax must be a symbol");
+    if (!argStrings.every<string | TypedVar>((x): x is string | TypedVar => typeof x === "string" || typeof x === "object" && "name" in x)) {
+        throw new Error("every argument in define function syntax must be a symbol or typed variable");
     }
     if (sl[2] === undefined) {
         throw new Error("body missing in function definition");
@@ -70,6 +70,9 @@ function strictIfMacro(sl: SExpr[]): SExpr {
 }
 
 function condMacro(se: SExpr[]): SExpr {
+    // TODO: error with this macro when being used for the type checker 
+    // because we don't have a seperate base case for the end of the thing
+    // without the conditions getting evaluated
     /* istanbul ignore next */
     if (se[0] !== "cond") {
         throw new Error("invalid macro");

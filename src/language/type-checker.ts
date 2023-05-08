@@ -1,3 +1,4 @@
+import { type } from "jquery";
 import { funMacro, macros } from "./macros";
 import {
     isEqual
@@ -17,14 +18,14 @@ export function tc(se: SExpr, env: TypeEnv): Type {
     if (Array.isArray(se)) {
         const [f, ...args] = se;
         if (mathOps.includes(f as string)) {
-            if (args.every(a => isEqual(tc(a, env), "number"))) {
+            if (args.every(a => typeOk(tc(a, env), "number"))) {
                 return "number";
             } else {
                 throw new Error("math operators require number for all arguments");
             }
         }
         if (compOpts.includes(f as string)) {
-            if (args.every(a => isEqual(tc(a, env), "number"))) {
+            if (args.every(a => typeOk(tc(a, env), "number"))) {
                 return "boolean";
             } else {
                 throw new Error("comparison operators require number for all arguments");
@@ -57,9 +58,9 @@ export function tc(se: SExpr, env: TypeEnv): Type {
             }
             const [c, t, e] = args;
             const tType = tc(t, env);
-            const eType = tc(t, env);
+            const eType = tc(e, env);
             if (!isEqual(tType, eType)) {
-                throw new Error("both if and then branches of if statement must be same type");
+                return makeUnion(tType, eType);
             }
             return tType;
         }
@@ -90,13 +91,13 @@ export function tc(se: SExpr, env: TypeEnv): Type {
                 return tc(macro(se), env);
             }
             const fv = env[f];
-            if (typeof fv !== "object") {
+            if (typeof fv !== "object" || Array.isArray(fv)) {
                 throw new Error(`undefinied function ${f}`);
             }
             return applyFunction(fv, args, f);
         }
         const fv = tc(f, env);
-        if (typeof fv !== "object") {
+        if (typeof fv !== "object" || Array.isArray(fv)) {
             throw new Error("function required");
         }
         return applyFunction(fv, args);
@@ -121,7 +122,7 @@ export function tc(se: SExpr, env: TypeEnv): Type {
         if (ft.args.length !== args.length) {
             throw new Error(`incorrect number of arguments for function ${fName ? fName : ""}`);
         }
-        if (!ft.args.every((a, i) => isEqual(a, tc(args[i], env)))) {
+        if (!ft.args.every((a, i) => typeOk(tc(args[i], env), a))) {
             throw new Error(`invalid arguments givin to function ${fName ? fName : ""}`);
         }
         return ft.returns;
@@ -132,9 +133,9 @@ export function tc(se: SExpr, env: TypeEnv): Type {
             throw new Error("expected define statement");
         }
         const varName = s[1];
-        // if (Array.isArray(varName)) {
-        //     return handleDefine(funMacro(s), localVars);
-        // }
+        if (Array.isArray(varName)) {
+            return handleDefine(funMacro(s), env);
+        }
         const value = s[2];
         if (value === undefined) {
             throw new Error("value for variable definition required");
@@ -146,7 +147,7 @@ export function tc(se: SExpr, env: TypeEnv): Type {
         if (typeof name !== "string") {
             throw new Error("variable name for define statement must be a string or [varName : type]");
         }
-        if (typeof varName === "object" && "name" in varName && !isEqual(varName.type, v)) {
+        if (typeof varName === "object" && "name" in varName && !typeOk(v, varName.type)) {
             throw new Error("improper type assignment");
         }
         return {
@@ -154,4 +155,31 @@ export function tc(se: SExpr, env: TypeEnv): Type {
             [name]: v,
         };
     }
+}
+
+/**
+ * checks that type a is a subset of type b
+ * 
+ * @param a 
+ * @param b 
+ * @returns 
+ */
+function typeOk(a: Type, b: Type): boolean {
+    if (Array.isArray(a)) {
+        return a.every(x => typeOk(x, b));
+    }
+    if (Array.isArray(b)) {
+        return b.some(x => typeOk(a, x));
+    }
+    return isEqual(a, b);
+}
+
+export function makeUnion(a: Type, b: Type): Type {
+    if (typeOk(a, b)) {
+        return b;
+    }
+    return [
+        a,
+        Array.isArray(b) ? b.filter(x => !typeOk(x, a)) : b,
+    ].flat(10);
 }
