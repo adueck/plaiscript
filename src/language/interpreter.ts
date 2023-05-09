@@ -8,7 +8,7 @@ export function interp(sp: SExpr[]): Value[] {
     return evalExps(sp, varTable);
 
     function evalExps(sp: SExpr[], localVars: Values): Value[] {
-        return sp.reduce((arr, s) => {
+        const b = sp.reduce((arr, s) => {
             // check for top-level defines here
             if (Array.isArray(s) && s[0] === "define") {
                 Object.assign(localVars, handleDefine(s, localVars));
@@ -16,6 +16,7 @@ export function interp(sp: SExpr[]): Value[] {
             }
             return [...arr, evalSExpr(s, localVars)];
         }, [] as Value[]);
+        return b;
     }
     
     function evalSExpr(se: SExpr, localVars: Values): Value {
@@ -85,13 +86,17 @@ export function interp(sp: SExpr[]): Value[] {
             }
             if (f === "lambda") {
                 const args = elems[0];
-                if (!Array.isArray(args) || !args.every<string>((x): x is string => typeof x === "string")) {
+                if (!(Array.isArray(args) && args.every<string | TypedVar>((x): x is string | TypedVar => (
+                    typeof x === "string" || typeof x === "object" && "name" in x
+                )))) {
                     throw new Error("args for lambda must be s-expr of strings");
                 }
                 const body = elems[1];
                 const fun: Fun = {
                     type: "function",
-                    args,
+                    args: args.map(a => typeof a === "object" && "name" in a
+                        ? a.name
+                        : a),
                     body,
                     env: localVars,
                 };

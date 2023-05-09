@@ -52,6 +52,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
     if (checkTypes) {
       try {
         const e = parser(plainTokenizer(text, false));
+        console.log({ typeE: e });
         e.forEach((ex) => {
           tc(ex, {});
         });

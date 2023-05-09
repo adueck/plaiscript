@@ -31,12 +31,8 @@ export function funMacro(sl: SExpr[]): SExpr {
     if (sl[0] !== "define") {
         throw new Error("invalid macro");
     }
-    if (!Array.isArray(sl[1]) || typeof sl[1][0] !== "string") {
+    if (!Array.isArray(sl[1]) || !(typeof sl[1][0] === "string" || (typeof sl[1][0] === "object" && "name" in sl[1][0]))) {
         throw new Error("invalid define function syntax");
-    }
-    const argStrings = sl[1].slice(1);
-    if (!argStrings.every<string | TypedVar>((x): x is string | TypedVar => typeof x === "string" || typeof x === "object" && "name" in x)) {
-        throw new Error("every argument in define function syntax must be a symbol or typed variable");
     }
     if (sl[2] === undefined) {
         throw new Error("body missing in function definition");

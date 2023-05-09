@@ -1,6 +1,6 @@
 import { stdLib } from "./std-lib";
 
-const diSymbols = ["<=", ">="];
+const diSymbols = ["<=", ">=", "->"];
 const symbols = ["(", ")", "+", "-", "*", "/", "=", "<", ">", ",", "[", "]", "{", "}", ":"];
 const whitespace = [" ", "\t", "\n"];
 

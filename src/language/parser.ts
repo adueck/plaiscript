@@ -1,5 +1,4 @@
 import { useTokens } from "../lib/useTokens";
-import { tokenizer } from "./tokenizer";
 import { makeUnion } from "./type-checker";
 
 const closers = [")", "]", "}"];
@@ -90,12 +89,25 @@ export function parse(tokens: Readonly<(string|number)[]>): SExpr[] {
         if (typeof s === "string") {
             return s as Type;
         }
-        const [uMark, ...types] = s;
-        if (uMark !== "U" && uMark !== "union") {
-            throw new Error("union type expected");
+        const arrowIndex = s.findIndex(x => x === "->");
+        if (arrowIndex !== -1) {
+            const args = s.slice(0, arrowIndex);
+            const returns = s.slice(arrowIndex + 1);
+            if (returns.length !== 1) {
+                throw new Error("one return type required");
+            }
+            return {
+                args: args.map(makeType),
+                returns: makeType(returns[0]),
+            };
         }
-        return types.reduce<Type>((type, x) => {
-            return makeUnion(makeType(x), type);
-        }, "never");
+        const [first, ...rest] = s;
+        if (first === "U" || first === "union") {
+            return rest.reduce<Type>((type, x) => {
+                return makeUnion(makeType(x), type);
+            }, "never");
+        }
+        throw new Error("union type expected");
+
     }
 }

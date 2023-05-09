@@ -205,6 +205,18 @@ x)`,
     },
     {
         input: `(local
+            ((define ([myAdd: (number number -> string)] [x: number] [y: number]) (+ x y)))
+          (myAdd 2 3))`,
+        type: "error",
+    },
+    {
+        input: `(local
+            ((define ([myAdd: (number number -> string)] [x: number] [y: number]) "foo"))
+          (myAdd 2 3))`,
+        type: "string",
+    },
+    {
+        input: `(local
             ((define (myAdd [x: number] [y: number]) (+ x y))
              (define doubMe (lambda ([r: number]) (* 2 r))))
 (doubMe (myAdd 2)))`,
