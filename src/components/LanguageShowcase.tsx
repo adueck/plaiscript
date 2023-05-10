@@ -3,7 +3,7 @@ import { printValue } from '../lib/print-value';
 import { features } from '../language/features';
 import Toast from "react-bootstrap/Toast";
 import { tokenizer as plainTokenizer } from '../language/tokenizer';
-import { tc } from '../language/type-checker';
+import { tcTop } from '../language/type-checker';
 import { useStickyState } from 'use-sticky-reducer';
 
 const textStorageKey = "editor-text";
@@ -52,10 +52,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
     if (checkTypes) {
       try {
         const e = parser(plainTokenizer(text, false));
-        console.log({ typeE: e });
-        e.forEach((ex) => {
-          tc(ex, {});
-        });
+        tcTop(e);
         setTcError("");
       } catch(e) {
         // @ts-ignore

@@ -1,6 +1,7 @@
 import { parse } from "./parser";
+import { typeEquivalent } from "./predicates";
 import { tokenizer } from "./tokenizer";
-import { makeUnion, tc, typeSubsetOf } from "./type-checker";
+import { makeUnion, tcTop } from "./type-checker";
 
 test("makeUnion", () => {
     expect(makeUnion("string", "number"))
@@ -282,18 +283,15 @@ x)`,
 
 test("tc test", () => {
     tests.forEach(({ input, type }) => {
-        const parsed = parse(tokenizer(input, false))[0];
+        const parsed = parse(tokenizer(input, false));
         if (type === "error") {
             expect(() => {
-                tc(parsed, {});
+                tcTop(parsed);
             }).toThrow();
         } else {
-            const resultType = tc(parsed, {});
+            const resultType = tcTop(parsed);
+            console.log({ resultType, type });
             expect(typeEquivalent(resultType, type)).toBe(true);
         }
     });
 });
-
-function typeEquivalent(a: Type, b: Type): boolean {
-    return typeSubsetOf(a, b) && typeSubsetOf(b, a);
-}

@@ -1,3 +1,5 @@
+import { isIdentOrTypedVar } from "./predicates";
+
 export const macros: Partial<Record<string, (se: SExpr[]) => SExpr>> = {
     let: letMacro,
     strictIf: strictIfMacro,
@@ -6,6 +8,7 @@ export const macros: Partial<Record<string, (se: SExpr[]) => SExpr>> = {
     and: andMacro,
     not: notMacro,
     or: orMacro,
+    local: localMacro,
 };
 
 function letMacro(sl: SExpr[]): SExpr {
@@ -13,7 +16,7 @@ function letMacro(sl: SExpr[]): SExpr {
     if (sl[0] !== "let") {
         throw new Error("invalid macro");
     }
-    if (!Array.isArray(sl[1]) || typeof sl[1][0] !== "string") {
+    if (!Array.isArray(sl[1]) || !isIdentOrTypedVar(sl[1][0])) {
         throw new Error("invalid let syntax");
     }
     if (sl[2] === undefined) {
@@ -31,7 +34,7 @@ export function funMacro(sl: SExpr[]): SExpr {
     if (sl[0] !== "define") {
         throw new Error("invalid macro");
     }
-    if (!Array.isArray(sl[1]) || !(typeof sl[1][0] === "string" || (typeof sl[1][0] === "object" && "name" in sl[1][0]))) {
+    if (!Array.isArray(sl[1]) || !isIdentOrTypedVar(sl[1][0])) {
         throw new Error("invalid define function syntax");
     }
     if (sl[2] === undefined) {
@@ -118,11 +121,6 @@ function andMacro(se: SExpr[]): SExpr {
     if (b === undefined) {
         return a;
     }
-    if (rest[0] === undefined) {
-        return ["if", ["not", ["false?", a]],
-                      b,
-                      false];
-    }
     return ["if", ["not", ["false?", a]],
                   ["and", b, ...rest],
                   false];
@@ -152,4 +150,15 @@ function notMacro(se: SExpr[]): SExpr {
     }
     const [notI, val] = se;
     return ["false?", val];
+}
+
+function localMacro(se: SExpr[]): SExpr {
+    const [localI, defines, body] = se;        
+    if (!Array.isArray(defines)) {
+        throw new Error("defines section of local statement must be list of defiine statemens");
+    }
+    if (body === undefined) {
+        throw new Error("body of local statement missing");
+    }
+    return ["begin", ...defines, body];
 }

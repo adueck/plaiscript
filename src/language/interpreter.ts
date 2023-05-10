@@ -1,4 +1,5 @@
 import { funMacro, macros } from "./macros";
+import { isIdentOrTypedVar, isTypedVar } from "./predicates";
 const mathPrimitives = ["+", "-", "*", "/", "=", "<", ">", "<=", ">="] as const;
 type MathPrimitive = typeof mathPrimitives[number];
 
@@ -8,7 +9,7 @@ export function interp(sp: SExpr[]): Value[] {
     return evalExps(sp, varTable);
 
     function evalExps(sp: SExpr[], localVars: Values): Value[] {
-        const b = sp.reduce((arr, s) => {
+        return sp.reduce((arr, s) => {
             // check for top-level defines here
             if (Array.isArray(s) && s[0] === "define") {
                 Object.assign(localVars, handleDefine(s, localVars));
@@ -16,11 +17,10 @@ export function interp(sp: SExpr[]): Value[] {
             }
             return [...arr, evalSExpr(s, localVars)];
         }, [] as Value[]);
-        return b;
     }
     
     function evalSExpr(se: SExpr, localVars: Values): Value {
-        if (typeof se === "object" && "name" in se) {
+        if (isTypedVar(se)) {
             throw new Error("misplaced typed variable");
         }
         if (Array.isArray(se)) {
@@ -61,21 +61,6 @@ export function interp(sp: SExpr[]): Value[] {
                     return Array.isArray(evalSExpr(elems[0], localVars)); 
                 }
             }
-            if (f === "local") {
-                const defines = elems[0];
-                const body = elems[1];
-                if (!Array.isArray(defines)) {
-                    throw new Error("defines section of local statement must be list of defiine statemens");
-                }
-                if (body === undefined) {
-                    throw new Error("body of local statement missing");
-                }
-                const newVars = defines.reduce((vars, x) => ({
-                    ...vars,
-                    ...handleDefine(x, vars),
-                }), localVars);
-                return evalSExpr(body, newVars);
-            }
             if (f === "if") {
                 if (elems.length !== 3) {
                     throw new Error("if statement requires three arguments");
@@ -87,16 +72,14 @@ export function interp(sp: SExpr[]): Value[] {
             if (f === "lambda") {
                 const args = elems[0];
                 if (!(Array.isArray(args) && args.every<string | TypedVar>((x): x is string | TypedVar => (
-                    typeof x === "string" || typeof x === "object" && "name" in x
+                    isIdentOrTypedVar(x)
                 )))) {
                     throw new Error("args for lambda must be s-expr of strings");
                 }
                 const body = elems[1];
                 const fun: Fun = {
                     type: "function",
-                    args: args.map(a => typeof a === "object" && "name" in a
-                        ? a.name
-                        : a),
+                    args: args.map(a => isTypedVar(a) ? a.name : a),
                     body,
                     env: localVars,
                 };
@@ -141,7 +124,7 @@ export function interp(sp: SExpr[]): Value[] {
         if (value === undefined) {
             throw new Error("value for variable definition required");
         }
-        const name = typeof varName === "object" && "name" in varName
+        const name = isTypedVar(varName) 
             ? varName.name
             : varName;
         if (typeof name !== "string") {
