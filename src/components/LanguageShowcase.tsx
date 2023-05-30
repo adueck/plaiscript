@@ -147,8 +147,8 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
           <code>
             <pre>
               {features.find(f => f.label === featureSelected)?.cases.map<string>((c) => (
-                `${c.input}\n> ${c.output.join("\n")}`
-              )).join("\n")}
+                `${c.input}\n; output: ${c.output.join(", ")}`
+              )).join("\n\n")}
             </pre>
           </code>
         </Toast.Body>
