@@ -4,7 +4,7 @@
 
 This is an exercise in progress in building a language with an interpreter, working through [PLAI](https://www.plai.org). Instead of doing it in Racket I'm trying to do it in TypeScript, macros and all.
 
-[Live site](https://adueck.github.io/playscript)
+[Live site](https://adueck.github.io/plaiscript)
 
 ## Development
 

@@ -1,8 +1,5 @@
 import { funMacro, macros } from "./macros";
-import {
-    isEqual
-} from "lodash";
-import { isTypedVar, typeSubsetOf } from "./predicates";
+import { isIdentOrTypedVar, isTypedVar, typeEquivalent, typeSubsetOf } from "./predicates";
 
 const mathOps = ["+", "-", "*", "/"];
 const compOpts = ["=", "<", ">", "<=", ">="];
@@ -53,21 +50,6 @@ export function tcTop(se: SExpr[]): Type[] {
                 }
                 return "boolean";
             }
-            if (f === "local") {
-                if (args.length !== 2) {
-                    throw new Error("local requires two arguments");
-                }
-                const defines = args[0];
-                const body = args[1];
-                if (!Array.isArray(defines)) {
-                    throw new Error("defines section of local statement must be list of defiine statemens");
-                }
-                const newVars = defines.reduce((vars, x) => ({
-                    ...vars,
-                    ...handleDefine(x, vars),
-                }), env);
-                return tc(body, newVars);
-            }
             if (f === "if") {
                 if (args.length !== 3) {
                     throw new Error("if requires 3 arguments");
@@ -86,6 +68,12 @@ export function tcTop(se: SExpr[]): Type[] {
                     }
                     return makeUnion(tc(arm[1], env), type);
                 }, "never");
+            }
+            if (f === "begin") {
+                if (args.length === 0) {
+                    throw new Error("begin requires at least one argument");
+                }
+                return evalExps(args, env)[0];
             }
             if (f === "lambda") {
                 if (args.length !== 2) {
@@ -160,28 +148,63 @@ export function tcTop(se: SExpr[]): Type[] {
         if (Array.isArray(varName)) {
             return handleDefine(funMacro(s), env);
         }
+        if (!isIdentOrTypedVar(varName)) {
+            throw new Error("invalid var name for define statement");
+        }
         const value = s[2];
         if (value === undefined) {
             throw new Error("value for variable definition required");
         }
-        const v = tc(value, env);
-        const name = isTypedVar(varName) 
-            ? varName.name
-            : varName;
-        if (typeof name !== "string") {
+        if (!isLambda(s)) {
+            const val = tc(value, env);
+            const isTV = isTypedVar(varName);
+            if (isTV) {
+                if (!typeEquivalent(val, varName.type)) {
+                    throw new Error("invalid type assignment");
+                } else {
+                    return {
+                        ...structuredClone(env),
+                        [varName.name]: varName.type,
+                    };
+                }
+            } else {
+                return {
+                    ...structuredClone(env),
+                    [varName]: val,
+                };
+            }
+        }
+        // TEST FOR ALL THIS TODO STUFF!
+        // Add in type of function here if we have it
+        // then when we get a union of the base case and recursion, we can choose the base case
+        if (!isTypedVar(varName)) {
+            throw new Error("vars must be typed");
+            // TODO: allow type inference
+            // can be inferred on variables and non-recursive functions
+        }
+        const vEnv = isLambda(s)
+            // give the function type to the lambda ahead of time in case of recursive functions
+            ? {
+                ...structuredClone(env),
+                [varName.name]: varName.type
+            }
+            : env;
+        // TODO: in case of a defined function, pass the types to the args in the lambda
+        const v = tc(value, vEnv);
+        if (typeof varName.name !== "string") {
             throw new Error("variable name for define statement must be a string or [varName : type]");
         }
-        if (isTypedVar(varName) && !typeSubsetOf(v, varName.type)) {
+        if (!typeSubsetOf(v, varName.type)) {
             throw new Error("improper type assignment");
         }
-        // if type is assigned to variable manually, use the manually assigned type (after checking above)
-        const typeV = isTypedVar(varName) 
-            ? varName.type
-            : v;
         return {
             ...structuredClone(env),
-            [name]: typeV,
+            [varName.name]: v,
         };
+
+        function isLambda(s: SExpr) {
+            return Array.isArray(s) && Array.isArray(s[2]) && s[2][0] === "lambda";
+        }
     }
 }
 

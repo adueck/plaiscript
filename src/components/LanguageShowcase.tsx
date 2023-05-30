@@ -79,6 +79,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
     localStorage.setItem(textStorageKey, t);
     setError("");
     setResult([]);
+    setTcError("");
     setTree([]);
     setText(t);
     try {

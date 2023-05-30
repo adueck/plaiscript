@@ -15,6 +15,8 @@ test("typeSubsetOf", () => {
         .toBe(true);
 });
 
+// TODO: check lambdas that have a subset in the returns
+
 test("typeEquivalent", () => {
     expect(typeEquivalent("string", "string"))
         .toBe(true);
@@ -26,4 +28,12 @@ test("typeEquivalent", () => {
         .toBe(false);
     expect(typeEquivalent([["function", "boolean"], "number"], ["function", "boolean", "number"]))
         .toBe(true);
+    expect(typeEquivalent(
+        [[ 'boolean', 'string', 'number', 'string', 'number']],
+        [ 'number', 'boolean', 'string' ]
+    )).toBe(true);
+    expect(typeEquivalent(
+        [[ 'boolean', 'string', 'number', 'string', 'number']],
+        [ 'number', 'boolean' ]
+    )).toBe(false);
 });

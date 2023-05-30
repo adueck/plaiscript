@@ -66,17 +66,14 @@ export function parse(tokens: Readonly<(string|number)[]>): SExpr[] {
         if (!Array.isArray(se)) {
             throw new Error("typed var parsing error");
         }
-        const [name, colon, typeV] = se;
+        const [name, colon, ...typeV] = se;
         if (typeof name !== "string") {
             throw new Error("identifier expected for typed variable name");
         }
         if (colon !== ":") {
             throw new Error(": expected in typed variable");
         }
-        if (typeof typeV !== "string" && !Array.isArray(typeV)) {
-            throw new Error("invalid type syntax in typed var");
-        }
-        const type = makeType(typeV);
+        const type = makeType(typeV.length === 1 ? typeV[0] : typeV);
         return {
             name,
             type,
@@ -108,6 +105,5 @@ export function parse(tokens: Readonly<(string|number)[]>): SExpr[] {
             }, "never");
         }
         throw new Error("union type expected");
-
     }
 }
