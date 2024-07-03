@@ -1,5 +1,5 @@
 import { funMacro, macros } from "./macros";
-import { isIdentOrTypedVar, isTypedVar, typeEquivalent, typeSubsetOf } from "./predicates";
+import { isIdentOrTypedVar as isIdentitiyOrTypedVar, isTypedVar, typeEquivalent, typeSubsetOf } from "./predicates";
 
 const mathOps = ["+", "-", "*", "/"];
 const compOpts = ["=", "<", ">", "<=", ">="];
@@ -148,18 +148,18 @@ export function tcTop(se: SExpr[]): Type[] {
         if (Array.isArray(varName)) {
             return handleDefine(funMacro(s), env);
         }
-        if (!isIdentOrTypedVar(varName)) {
+        if (!isIdentitiyOrTypedVar(varName)) {
             throw new Error("invalid var name for define statement");
         }
         const value = s[2];
         if (value === undefined) {
             throw new Error("value for variable definition required");
         }
-        if (!isLambda(s)) {
-            const val = tc(value, env);
-            const isTV = isTypedVar(varName);
+        const val = tc(value, env);
+        const isTV = isTypedVar(varName);
+        if (!isLambda(value)) {
             if (isTV) {
-                if (!typeEquivalent(val, varName.type)) {
+                if (!typeSubsetOf(val, varName.type)) {
                     throw new Error("invalid type assignment");
                 } else {
                     return {
@@ -175,14 +175,19 @@ export function tcTop(se: SExpr[]): Type[] {
             }
         }
         // TEST FOR ALL THIS TODO STUFF!
+        // RIGHT NOW LAMBDAS NEED TO BE TYPED
+        // WE DON'T HAVE THE SOFISTICATION TO DO THE TYPE INFERENCE
         // Add in type of function here if we have it
         // then when we get a union of the base case and recursion, we can choose the base case
         if (!isTypedVar(varName)) {
+            console.log({ varName, val });
             throw new Error("vars must be typed");
             // TODO: allow type inference
             // can be inferred on variables and non-recursive functions
         }
-        const vEnv = isLambda(s)
+        // TODO: CHECK THIS value - SHOULD BE SOMETHING DIFFERENT
+        // is function --
+        const vEnv = isLambda(value)
             // give the function type to the lambda ahead of time in case of recursive functions
             ? {
                 ...structuredClone(env),
@@ -203,7 +208,7 @@ export function tcTop(se: SExpr[]): Type[] {
         };
 
         function isLambda(s: SExpr) {
-            return Array.isArray(s) && Array.isArray(s[2]) && s[2][0] === "lambda";
+            return Array.isArray(s) && Array.isArray(s[1]) && s[0] === "lambda";
         }
     }
 }

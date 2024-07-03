@@ -10,3 +10,13 @@ export function printValue(v: Value): string {
     }
     return `"${v}"`;
 }
+
+export function printType(t: Type): string {
+    if (typeof t === "string") {
+        return t;
+    }
+    if (Array.isArray(t)) {
+        return `(U ${t.map(printType).join(" ")})`
+    }
+    return `Function: ${t.args.map(printType).join(" ")} -> ${printType(t.returns)}`;
+}

@@ -42,7 +42,7 @@ const tests: {
                 type: "number",
             },
             {
-                input: `(local ((define [x : number] 3))
+                input: `(local ((define x 3))
         x)`,
                 type: "number",
             },
@@ -160,11 +160,11 @@ x`,
             {
                 input: `(cond
             [#f 1]
-            [#t 2]
+            [#t #f]
             [#t 3]
             [(> 3 2) "foo"]
         )`,
-                type: ["number", "string"],
+                type: ["number", "string", "boolean"],
             },
         ],
     },
@@ -172,26 +172,26 @@ x`,
         label: "logic",
         // TODO: tighten this up
         cases: [
-            // {
-            //     input: `(not 10)`,
-            //     type: "boolean",
-            // },
-            // {
-            //     input: `(not 7)`,
-            //     type: "boolean",
-            // },
-            // {
-            //     input: `(or)`,
-            //     type: "boolean",
-            // },
-            // {
-            //     input: `(or 2)`,
-            //     type: ["number", "boolean"],
-            // },
-            // {
-            //     input: `(or 2 "foo" 10 "baz")`,
-            //     type: ["number", "boolean", "string"],
-            // },
+            {
+                input: `(not 10)`,
+                type: "boolean",
+            },
+            {
+                input: `(not 7)`,
+                type: "boolean",
+            },
+            {
+                input: `(or)`,
+                type: "boolean",
+            },
+            {
+                input: `(or 2)`,
+                type: ["number", "boolean"],
+            },
+            {
+                input: `(or 2 "foo" 10 "baz")`,
+                type: ["number", "boolean", "string"],
+            },
             {
                 input: `(and 3 4)`,
                 type: ["number", "boolean"],
@@ -229,19 +229,28 @@ x`,
                     returns: "string",
                 },
             },
-    //     {
-    //         input: `(local
-    //             ((define myAdd (lambda ([x: number] [y: number]) (+ x y)))
-    //              (define doubMe (lambda ([r: number]) (* 2 r))))
-    // (doubMe (myAdd 2 3)))`,
-    //         type: "number",
-    //     },
-    //     {
-    //         input: `(local
-    //             ((define (myAdd [x: number] [y: number]) (+ x y)))
-    //           (myAdd 2 3))`,
-    //         type: "number",
-    //     },
+            {
+                input: `(local
+                    ((define nameF (lambda ([name: string]) name)))
+                    name)`,
+                type: {
+                    args: ["string"],
+                    returns: "string",
+                },
+            },
+        //     {
+        //         input: `(local
+        //             ((define myAdd (lambda ([x: number] [y: number]) (+ x y)))
+        //             (define doubMe (lambda ([r: number]) (* 2 r))))
+        // (doubMe (myAdd 2 3)))`,
+        //         type: "number",
+        //     },
+        // {
+        //     input: `(local
+        //         ((define (myAdd [x: number] [y: number]) (+ x y)))
+        //       (myAdd 2 3))`,
+        //     type: "number",
+        // },
     //     {
     //         input: `(local
     //             ((define ([myAdd: (number number -> string)] [x: number] [y: number]) (+ x y)))
@@ -270,29 +279,29 @@ x`,
                 type: "error",
             },
         // TODO: proper checking of math and comparison types with arbitrary number of args
-    //     {
-    //         input: `(local
-    //     ((define [x: (U number string)] 3))
-    // x)`,
-    //         type: ["number", "string"],
-    //     },
-    //     {
-    //         input: `(local
-    //     ((define [x: (U number (U string function))] 3))
-    // x)`,
-    //         type: ["number", "string", "function"],
-    //     },
-    //     {
-    //         input: `(local
-    //     ((define (myAdd [x: number] [y: (U number string)]) (+ x y)))
-    // (myAdd 2 3))`,
-    //         type: "error",
-    //     },
-    //     {
-    //         input: `(define (myAdd [x: number] [y: number]) (+ x y))
-    // (myAdd 2 3)`,
-    //         type: ["number"],
-    //     },
+            {
+                input: `(local
+            ((define [x: (U number string)] 3))
+        x)`,
+                type: ["number", "string"],
+            },
+            {
+                input: `(local
+            ((define [x: (U number (U string function))] 3))
+        x)`,
+                type: ["number", "string", "function"],
+            },
+            {
+                input: `(local
+            ((define (myAdd [x: number] [y: (U number string)]) (+ x y)))
+        (myAdd 2 3))`,
+                type: "error",
+            },
+        //     {
+        //         input: `(define (myAdd [x: number] [y: number]) (+ x y))
+        // (myAdd 2 3)`,
+        //         type: ["number"],
+        //     },
         ],
 
         // levels of inference with non-recursive lambdas

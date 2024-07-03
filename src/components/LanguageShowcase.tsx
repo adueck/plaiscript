@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { printValue } from '../lib/print-value';
+import { printValue, printType } from '../lib/print-value';
 import { features } from '../language/features';
 import Toast from "react-bootstrap/Toast";
 import { tokenizer as plainTokenizer } from '../language/tokenizer';
@@ -21,6 +21,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
   const [text, setText] = useState("");
   const [error, setError] = useState<string>("");
   const [result, setResult] = useState<Value[]>([]);
+  const [typeResult, setTypeResult] = useState<Type[]>([]);
   const [checkTypes, setCheckTypes] = useStickyState<boolean>(false, "check-types");
   const [tcError, setTcError] = useState<string>("");
   const [tree, setTree] = useState<SExpr[]>([]);
@@ -46,13 +47,14 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
       setTree([]);
       setError("");
       setResult([]);
+      setTypeResult([]);
       setTcError("");
       return;
     }
     if (checkTypes) {
       try {
         const e = parser(plainTokenizer(text, false));
-        tcTop(e);
+        setTypeResult(tcTop(e));
         setTcError("");
       } catch(e) {
         // @ts-ignore
@@ -71,6 +73,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
       const msg = e.message as string;
       setError(`syntax error: ${msg}`);
       setResult([]);
+      setTypeResult([]);
       setTree([]);
     }
   }
@@ -81,6 +84,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
     setResult([]);
     setTcError("");
     setTree([]);
+    setTypeResult([]);
     setText(t);
     try {
       parser(tokenizer(t));
@@ -93,6 +97,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
     setText("");
     setResult([]);
     setTree([]);
+    setTypeResult([]);
   }
   return (
     <div className="mb-4 mt-4" style={{ maxWidth: "40rem" }}>
@@ -178,6 +183,12 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
         <div className="py-1">Result:</div>
         <samp>
           <pre>{result.map(v => printValue(v)).join(" ")}</pre>
+        </samp>
+      </div>}
+      {checkTypes && typeResult.length > 0 && <div>
+        <div className="py-1">Type Value:</div>
+        <samp>
+          <pre>{typeResult.map(v => printType(v)).join(" ")}</pre>
         </samp>
       </div>}
       {tree && Array.isArray(tree) && tree.length > 0 && <div className="py-2">
