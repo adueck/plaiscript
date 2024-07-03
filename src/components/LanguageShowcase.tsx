@@ -1,37 +1,36 @@
-import { useEffect, useState } from 'react';
-import { printValue, printType } from '../lib/print-value';
-import { features } from '../language/features';
+import { useEffect, useState } from "react";
+import { printValue, printType } from "../lib/print-value";
+import { features } from "../language/features";
 import Toast from "react-bootstrap/Toast";
-import { tokenizer as plainTokenizer } from '../language/tokenizer';
-import { tcTop } from '../language/type-checker';
-import { useStickyState } from 'use-sticky-reducer';
 
 const textStorageKey = "editor-text";
 
+type FeatureName = (typeof features)[number]["label"];
 
-type FeatureName = typeof features[number]["label"];
-
-function LanguageShowCase({ tokenizer, parser, evaluator }: {
-    tokenizer: (l: string) => (string | number)[],
-    parser: (t: (string | number)[]) => SExpr[],
-    evaluator: (x: SExpr[]) => Value[],
-    examples: { input: string, value: any }[],
+function LanguageShowCase({
+  tokenizer,
+  parser,
+  evaluator,
+}: {
+  tokenizer: (l: string) => (string | number)[];
+  parser: (t: (string | number)[]) => SExpr[];
+  evaluator: (x: SExpr[]) => Value[];
+  examples: { input: string; value: any }[];
 }) {
   // const textarea = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState<string>("");
   const [result, setResult] = useState<Value[]>([]);
-  const [typeResult, setTypeResult] = useState<Type[]>([]);
-  const [checkTypes, setCheckTypes] = useStickyState<boolean>(false, "check-types");
-  const [tcError, setTcError] = useState<string>("");
   const [tree, setTree] = useState<SExpr[]>([]);
-  const [featureSelected, setFeatureSelected] = useState<undefined | typeof features[number]["label"]>(undefined);
+  const [featureSelected, setFeatureSelected] = useState<
+    undefined | (typeof features)[number]["label"]
+  >(undefined);
   useEffect(() => {
     const saved = localStorage.getItem(textStorageKey) as string | null;
     if (saved) {
       setText(saved);
     }
-  })
+  });
   // useEffect(() => {
   //   // @ts-ignore
   //   $(".my-textarea").highlightWithinTextarea({ highlight: "foo" });
@@ -47,20 +46,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
       setTree([]);
       setError("");
       setResult([]);
-      setTypeResult([]);
-      setTcError("");
       return;
-    }
-    if (checkTypes) {
-      try {
-        const e = parser(plainTokenizer(text, false));
-        setTypeResult(tcTop(e));
-        setTcError("");
-      } catch(e) {
-        // @ts-ignore
-        const msg = e.message as string;
-        setTcError(`type error: ${msg}`);
-      }
     }
     try {
       const e = parser(tokenizer(text));
@@ -68,12 +54,11 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
       const ev = evaluator(e);
       setResult(ev);
       setError("");
-    } catch(e) {
+    } catch (e) {
       // @ts-ignore
       const msg = e.message as string;
       setError(`syntax error: ${msg}`);
       setResult([]);
-      setTypeResult([]);
       setTree([]);
     }
   }
@@ -82,9 +67,7 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
     localStorage.setItem(textStorageKey, t);
     setError("");
     setResult([]);
-    setTcError("");
     setTree([]);
-    setTypeResult([]);
     setText(t);
     try {
       parser(tokenizer(t));
@@ -97,12 +80,12 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
     setText("");
     setResult([]);
     setTree([]);
-    setTypeResult([]);
   }
   return (
     <div className="mb-4 mt-4" style={{ maxWidth: "40rem" }}>
       <pre>
-        <code>{`(define (fibb n)
+        <code>
+          {`(define (fibb n)
   (if (< n 3)
   n
   (+ (fibb (- n 2)) (fibb (- n 1)))))
@@ -132,28 +115,24 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
           ))}
         </ul>
       </div>
-      <div className="form-check">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          checked={checkTypes}
-          onChange={() => setCheckTypes(o => !o)}
-          id="check-types"
-        />
-        <label className="form-check-label" htmlFor="check-types">
-          use type checker (in progress 🚧)
-        </label>
-      </div>
-      <Toast className="mb-3 mt-2" style={{ width: "100%" }} show={!!featureSelected} onClose={() => setFeatureSelected(undefined)}>
+      <Toast
+        className="mb-3 mt-2"
+        style={{ width: "100%" }}
+        show={!!featureSelected}
+        onClose={() => setFeatureSelected(undefined)}
+      >
         <Toast.Header>
           <strong className="me-auto">{featureSelected}</strong>
         </Toast.Header>
         <Toast.Body style={{ maxHeight: "300px", overflowY: "auto" }}>
           <code>
             <pre>
-              {features.find(f => f.label === featureSelected)?.cases.map<string>((c) => (
-                `${c.input}\n; output: ${c.output.join(", ")}`
-              )).join("\n\n")}
+              {features
+                .find((f) => f.label === featureSelected)
+                ?.cases.map<string>(
+                  (c) => `${c.input}\n; output: ${c.output.join(", ")}`
+                )
+                .join("\n\n")}
             </pre>
           </code>
         </Toast.Body>
@@ -163,7 +142,9 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
         <textarea
           placeholder="Enter code for evaluation..."
           style={{ fontFamily: "monospace" }}
-          className={`my-textarea form-control ${(error || (checkTypes && tcError)) ? "is-invalid" : result.length > 0 ? "is-valid" : ""}`}
+          className={`my-textarea form-control ${
+            error ? "is-invalid" : result.length > 0 ? "is-valid" : ""
+          }`}
           rows={8}
           value={text}
           onChange={handleTextChange}
@@ -171,32 +152,37 @@ function LanguageShowCase({ tokenizer, parser, evaluator }: {
       </div>
       <div className="d-flex flex-row justify-content-between">
         <div>
-          <button className="btn btn-primary" onClick={handleEvaluate}>evaluate</button>
+          <button className="btn btn-primary" onClick={handleEvaluate}>
+            evaluate
+          </button>
         </div>
         <div>
-          <button className="btn btn-secondary" onClick={handleClear}>clear</button>
+          <button className="btn btn-secondary" onClick={handleClear}>
+            clear
+          </button>
         </div>
       </div>
-      {tcError && checkTypes && <div className="text-muted small mt-2"><samp>{tcError}</samp></div>}
-      {error && <div className="text-muted small mt-2"><samp>{error}</samp></div>}
-      {result.length > 0 && <div>
-        <div className="py-1">Result:</div>
-        <samp>
-          <pre>{result.map(v => printValue(v)).join(" ")}</pre>
-        </samp>
-      </div>}
-      {checkTypes && typeResult.length > 0 && <div>
-        <div className="py-1">Type Value:</div>
-        <samp>
-          <pre>{typeResult.map(v => printType(v)).join(" ")}</pre>
-        </samp>
-      </div>}
-      {tree && Array.isArray(tree) && tree.length > 0 && <div className="py-2">
-        <details>
-          <summary>Syntax Tree</summary>
-          <pre className="mt-2">{JSON.stringify(tree, null, "  ")}</pre>
-        </details>
-      </div>}
+      {error && (
+        <div className="text-muted small mt-2">
+          <samp>{error}</samp>
+        </div>
+      )}
+      {result.length > 0 && (
+        <div>
+          <div className="py-1">Result:</div>
+          <samp>
+            <pre>{result.map((v) => printValue(v)).join(" ")}</pre>
+          </samp>
+        </div>
+      )}
+      {tree && Array.isArray(tree) && tree.length > 0 && (
+        <div className="py-2">
+          <details>
+            <summary>Syntax Tree</summary>
+            <pre className="mt-2">{JSON.stringify(tree, null, "  ")}</pre>
+          </details>
+        </div>
+      )}
     </div>
   );
 }
